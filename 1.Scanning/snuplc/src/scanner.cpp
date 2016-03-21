@@ -427,7 +427,7 @@ CToken* CScanner::Scan()
 					}
 
 					temp_tokval=tokval;
-					tokval = "invalid character after left apostrophe \"";
+					tokval = "invalid character after left backslash \"";
 					tokval += temp_tokval;
 					tokval += "\"";
 
@@ -467,6 +467,61 @@ CToken* CScanner::Scan()
 			}
 			break;
 	}
+
+
+	case '\"':
+	{
+		string temp_tokval;
+		c = _in->peek();
+		while(1){
+			if(c=='\"'){
+				//end of string
+				tokval=temp_tokval;
+				token=tString;
+				GetChar();
+				break;
+			}
+			else if(c=='\\'){
+				// meet backslash
+				tokval+=c;
+				temp_tokval+=c;
+
+				// check char after '\'
+				GetChar();
+				c=_in->peek();
+				if(isAfterBS(c)){
+					temp_tokval +=c;
+					tokval +=c;
+				}
+				else{
+					//undefined for 'not character ..	
+					//read until input meet whitespace
+					GetChar();
+					while (_in->good() && !IsWhite(_in->peek())){
+						tokval += c;
+						GetChar();
+					}
+					temp_tokval=tokval;
+					tokval = "invalid character after left backslash \"";
+					tokval += temp_tokval;
+					tokval += "\"";
+					break;
+				}
+			}
+			else{
+				// meet ASCII character
+				tokval +=c;
+				temp_tokval+=c;
+			}
+			GetChar();
+			c = _in->peek();
+
+		}
+		break;
+	}
+
+
+		
 
 
 
