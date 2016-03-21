@@ -65,6 +65,7 @@ enum EToken {
 	tCharacter,												///< 'chracter'
 	tString,													///< "string"
 
+	tComment,													///< for comment, not return to parser
 	// for keyword
 	tModule,
 	tProcedure,

@@ -66,6 +66,8 @@ char ETokenName[][TOKEN_STRLEN] = {
 	"tCharacter",
 	"tString",
 
+	"tComment",
+
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -112,6 +114,7 @@ char ETokenStr[][TOKEN_STRLEN] = {
 	"tCharacter (%s)",
 	"tString (%s)",
 	
+	"tComment",
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -314,6 +317,9 @@ void CScanner::NextToken()
   if (_token != NULL) delete _token;
 
   _token = Scan();
+	while(_token->GetType()==tComment){
+		_token = Scan();
+	}
 }
 
 void CScanner::RecordStreamPosition()
@@ -376,9 +382,27 @@ CToken* CScanner::Scan()
       break;
 
     case '*':
+			token = tMulDiv;
+			break;
     case '/':
-      token = tMulDiv;
-      break;
+			c = _in->peek();
+			if(c=='/'){
+				//comment
+				GetChar();
+				c=_in->peek();
+				while(c!='\n'){
+					GetChar();
+					c=_in->peek();
+				}
+				token = tComment;
+
+				break;
+				//continue
+			}
+			else{
+				token = tMulDiv;
+				break;
+			}
 
     case '=':
     case '#':
@@ -519,9 +543,6 @@ CToken* CScanner::Scan()
 		}
 		break;
 	}
-
-
-		
 
 
 
