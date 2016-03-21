@@ -63,6 +63,8 @@ char ETokenName[][TOKEN_STRLEN] = {
 
 	"tIdent",
 	"tNumber",
+	"tCharacter",
+	"tString",
 
 	//keyword
 	"tModule",
@@ -107,6 +109,8 @@ char ETokenStr[][TOKEN_STRLEN] = {
 
 	"tIdent (%s)",
 	"tNumber (%s)",
+	"tCharacter (%s)",
+	"tString (%s)",
 	
 	//keyword
 	"tModule",
@@ -337,6 +341,10 @@ bool isdigit(char c){
 	return (('0' <= c) && (c <= '9'));
 }
 
+bool isAfterBS(char c){
+	return (c =='n')||(c=='t')||(c=='"')||(c=='\'')||(c=='\\')||(c=='0');
+}
+
 CToken* CScanner::Scan()
 {
   EToken token;
@@ -392,6 +400,71 @@ CToken* CScanner::Scan()
     case ')':
       token = tRBrak;
       break;
+
+		case '\'':
+		{
+			string temp_tokval;
+			c = _in->peek();
+			// case for \n, \t ...
+			if(c == '\\'){
+				temp_tokval = '\\';
+				tokval += c;
+
+				// check char after '\'
+				GetChar();
+				c = _in->peek();
+				if(isAfterBS(c)){
+					temp_tokval += c;
+					tokval += c;
+				}
+				else{
+					//undefined until input meet whitespace
+					GetChar();
+					while (_in->good() && !IsWhite(_in->peek())){
+						tokval += c;
+						GetChar();
+					}
+
+					temp_tokval=tokval;
+					tokval = "invalid character after left apostrophe \"";
+					tokval += temp_tokval;
+					tokval += "\"";
+
+					break;
+				}
+			}
+			// case for ASCII char
+			else{
+				temp_tokval = c;
+				tokval += c;
+			}
+
+			//check right '
+			GetChar();
+			c = _in->peek();
+			if(c=='\''){
+				tokval=temp_tokval;
+				token=tCharacter;
+				GetChar();
+			}
+			else{
+				//undefined until input meet whitespace
+					GetChar();
+					while (_in->good() && IsWhite(_in->peek())){
+						tokval += c;
+						GetChar();
+					}
+
+					temp_tokval=tokval;
+					tokval = "not match right apostrophe \"";
+					tokval += temp_tokval;
+					tokval += "\"";
+
+					break;
+
+			}
+			break;
+	}
 
     default:
 			if(isletter(c)){

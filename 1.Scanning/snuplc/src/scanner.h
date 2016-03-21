@@ -62,6 +62,8 @@ enum EToken {
 
 	tIdent,														///< ident
 	tNumber,													///< number
+	tCharacter,												///< 'chracter'
+	tString,													///< "string"
 
 	// for keyword
 	tModule,
