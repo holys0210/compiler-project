@@ -418,7 +418,8 @@ CToken* CScanner::Scan()
 					tokval += c;
 				}
 				else{
-					//undefined until input meet whitespace
+					//undefined for 'not character ..	
+					//read until input meet whitespace
 					GetChar();
 					while (_in->good() && !IsWhite(_in->peek())){
 						tokval += c;
@@ -448,9 +449,10 @@ CToken* CScanner::Scan()
 				GetChar();
 			}
 			else{
-				//undefined until input meet whitespace
+				//undefined for not match apostrophe
+				//read until input meet whitespace
 					GetChar();
-					while (_in->good() && IsWhite(_in->peek())){
+					while (_in->good() && !IsWhite(_in->peek())){
 						tokval += c;
 						GetChar();
 					}
@@ -465,6 +467,8 @@ CToken* CScanner::Scan()
 			}
 			break;
 	}
+
+
 
     default:
 			if(isletter(c)){
