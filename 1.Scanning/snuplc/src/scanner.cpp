@@ -61,6 +61,25 @@ char ETokenName[][TOKEN_STRLEN] = {
   "tLBrak",                         ///< a left bracket
   "tRBrak",                         ///< a right bracket
 
+	//keyword
+	"tModule",
+	"tProcedure",
+	"tFunction",
+	"tVar",
+	"tInteger",
+	"tBoolean",
+	"tChar",
+	"tBegin",
+	"tEnd",
+	"tIf",
+	"tThen",
+	"tElse",
+	"tWhile",
+	"tDo",
+	"tReturn",
+	"tTrue",
+	"tFalse",
+
   "tEOF",                           ///< end of file
   "tIOError",                       ///< I/O error
   "tUndefined",                     ///< undefined
@@ -82,6 +101,25 @@ char ETokenStr[][TOKEN_STRLEN] = {
   "tDot",                           ///< a dot
   "tLBrak",                         ///< a left bracket
   "tRBrak",                         ///< a right bracket
+
+	//keyword
+	"tModule",
+	"tProcedure",
+	"tFunction",
+	"tVar",
+	"tInteger",
+	"tBoolean",
+	"tChar",
+	"tBegin",
+	"tEnd",
+	"tIf",
+	"tThen",
+	"tElse",
+	"tWhile",
+	"tDo",
+	"tReturn",
+	"tTrue",
+	"tFalse",
 
   "tEOF",                           ///< end of file
   "tIOError",                       ///< I/O error
