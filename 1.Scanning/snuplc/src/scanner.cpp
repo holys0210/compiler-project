@@ -396,7 +396,7 @@ CToken* CScanner::Scan()
     default:
 			if(isletter(c)){
 				//id or keyword
-				// find until inputstream meet not letter
+				// find until inputstream meet not letter or digit
 				c = _in->peek();
 				while(isletter(c)||isdigit(c)){
 					tokval += c;
@@ -417,6 +417,14 @@ CToken* CScanner::Scan()
 			}
 			else if(isdigit(c)){
 				//number
+				c = _in->peek();
+				while(isdigit(c)){
+					tokval += c;
+					GetChar();
+					c = _in->peek();
+				}
+				token = tNumber;
+
 			}
 			else{
 				//undefined
