@@ -61,6 +61,9 @@ char ETokenName[][TOKEN_STRLEN] = {
   "tLBrak",                         ///< a left bracket
   "tRBrak",                         ///< a right bracket
 
+	"tIdent",
+	"tNumber",
+
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -102,6 +105,9 @@ char ETokenStr[][TOKEN_STRLEN] = {
   "tLBrak",                         ///< a left bracket
   "tRBrak",                         ///< a right bracket
 
+	"tIdent (%s)",
+	"tNumber (%s)",
+	
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -323,6 +329,14 @@ CToken* CScanner::NewToken(EToken type, const string token)
   return new CToken(_saved_line, _saved_char, type, token);
 }
 
+bool isletter(char c){
+	return (('A'<=c) && (c <= 'Z')) || (('a' <= c) && (c <= 'z')) || (c == '_');
+}
+
+bool isdigit(char c){
+	return (('0' <= c) && (c <= '9'));
+}
+
 CToken* CScanner::Scan()
 {
   EToken token;
@@ -380,6 +394,38 @@ CToken* CScanner::Scan()
       break;
 
     default:
+			if(isletter(c)){
+				//id or keyword
+				// find until inputstream meet not letter
+				c = _in->peek();
+				while(isletter(c)||isdigit(c)){
+					tokval += c;
+					GetChar();
+					c = _in->peek();
+				}
+
+				//check string that it is a keyword
+				map<string, EToken>::iterator it;
+				it = keywords.find(tokval);
+				if(it != keywords.end()){
+					token=it->second;
+				}
+				else{
+					token = tIdent;
+				//	keywords[tokval]=token;
+				}
+			}
+			else if(isdigit(c)){
+				//number
+			}
+			else{
+				//undefined
+        tokval = "invalid character '";
+        tokval += c;
+        tokval += "'";
+			}
+
+		/* previous code
       if (('0' <= c) && (c <= '9')) {
         token = tDigit;
       } else
@@ -391,6 +437,7 @@ CToken* CScanner::Scan()
         tokval += "'";
       }
       break;
+			*/
   }
 
   return NewToken(token, tokval);

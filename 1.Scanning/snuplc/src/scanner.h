@@ -60,6 +60,9 @@ enum EToken {
   tLBrak,                           ///< a left bracket
   tRBrak,                           ///< a right bracket
 
+	tIdent,														///< ident
+	tNumber,													///< number
+
 	// for keyword
 	tModule,
 	tProcedure,
