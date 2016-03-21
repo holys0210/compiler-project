@@ -94,6 +94,23 @@ char ETokenStr[][TOKEN_STRLEN] = {
 //
 pair<const char*, EToken> Keywords[] =
 {
+	make_pair("module", tModule),
+	make_pair("procedure", tProcedure),
+	make_pair("function", tFunction),
+	make_pair("var", tVar),
+	make_pair("integer", tInteger),
+	make_pair("boolean", tBoolean),
+	make_pair("char", tChar),
+	make_pair("begin", tBegin),
+	make_pair("end", tEnd),
+	make_pair("if", tIf),
+	make_pair("then", tThen),
+	make_pair("else", tElse),
+	make_pair("while", tWhile),
+	make_pair("do", tDo),
+	make_pair("return", tReturn),
+	make_pair("true", tTrue),
+	make_pair("false", tFalse)
 };
 
 
