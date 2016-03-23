@@ -413,6 +413,9 @@ CToken* CScanner::Scan()
 				GetChar();
 				c=_in->peek();
 				while(c!='\n'){
+					if(c=='^'){
+						GetChar();
+					}
 					GetChar();
 					c=_in->peek();
 				}
