@@ -443,12 +443,6 @@ CToken* CScanner::Scan()
 				}
 				else{
 					//undefined for 'not character ..	
-					//read until input meet whitespace
-					GetChar();
-					while (_in->good() && !IsWhite(_in->peek())){
-						tokval += c;
-						GetChar();
-					}
 
 					temp_tokval=tokval;
 					tokval = "invalid character after left backslash \"";
@@ -474,15 +468,8 @@ CToken* CScanner::Scan()
 			}
 			else{
 				//undefined for not match apostrophe
-				//read until input meet whitespace
-					GetChar();
-					while (_in->good() && !IsWhite(_in->peek())){
-						tokval += c;
-						GetChar();
-					}
-
 					temp_tokval=tokval;
-					tokval = "not match right apostrophe \"";
+					tokval = "not match right single quote \"";
 					tokval += temp_tokval;
 					tokval += "\"";
 
