@@ -500,7 +500,14 @@ CToken* CScanner::Scan()
 				// check char after '\'
 				GetChar();
 				c = _in->peek();
-				if(isAfterBS(c)){
+				if(c=='\''){
+					// input is '\'
+					tokval=temp_tokval;
+					token=tCharacter;
+					GetChar();
+					break;
+				}
+				else if(isAfterBS(c)){
 					temp_tokval += c;
 					tokval += c;
 				}
