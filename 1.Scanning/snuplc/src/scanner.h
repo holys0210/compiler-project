@@ -73,6 +73,10 @@ enum EToken {
 	tLSqBrak,
 	tRSqBrak,
 
+	tComma,
+	tColon,
+
+
 	// for keyword
 	tModule,
 	tProcedure,

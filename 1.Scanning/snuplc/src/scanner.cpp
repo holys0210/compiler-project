@@ -74,6 +74,9 @@ char ETokenName[][TOKEN_STRLEN] = {
 	"tLSqBrak",
 	"tRSqBrak",
 
+	"tComma",
+	"tColon",
+
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -127,6 +130,9 @@ char ETokenStr[][TOKEN_STRLEN] = {
 	"tNot",
 	"tLSqBrak",
 	"tRSqBrak",
+	
+	"tComma",
+	"tColon",
 
 	//keyword
 	"tModule",
@@ -387,6 +393,9 @@ CToken* CScanner::Scan()
         tokval += GetChar();
         token = tAssign;
       }
+			else{
+				token = tColon;
+			}
       break;
 
     case '+':
@@ -466,6 +475,10 @@ CToken* CScanner::Scan()
     case '.':
       token = tDot;
       break;
+
+		case ',':
+			token = tComma;
+			break;
 
     case '(':
       token = tLBrak;
