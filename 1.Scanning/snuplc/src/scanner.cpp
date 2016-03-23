@@ -68,6 +68,12 @@ char ETokenName[][TOKEN_STRLEN] = {
 
 	"tComment",
 
+	"tAnd",
+	"tOr",
+	"tNot",
+	"tLSqBrak",
+	"tRSqBrak",
+
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -86,7 +92,7 @@ char ETokenName[][TOKEN_STRLEN] = {
 	"tReturn",
 	"tTrue",
 	"tFalse",
-
+	
   "tEOF",                           ///< end of file
   "tIOError",                       ///< I/O error
   "tUndefined",                     ///< undefined
@@ -115,6 +121,13 @@ char ETokenStr[][TOKEN_STRLEN] = {
 	"tString (%s)",
 	
 	"tComment",
+	
+	"tAnd",
+	"tOr",
+	"tNot",
+	"tLSqBrak",
+	"tRSqBrak",
+
 	//keyword
 	"tModule",
 	"tProcedure",
@@ -408,6 +421,15 @@ CToken* CScanner::Scan()
     case '#':
       token = tRelOp;
       break;
+
+		case '<':
+		case '>':
+			token = tRelOp;
+			c =_in->peek();
+			if(c=='='){
+				tokval += GetChar();
+			}
+			break;
 
     case ';':
       token = tSemicolon;

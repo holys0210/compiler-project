@@ -66,6 +66,13 @@ enum EToken {
 	tString,													///< "string"
 
 	tComment,													///< for comment, not return to parser
+
+	tAnd,
+	tOr,
+	tNot,
+	tLSqBrak,
+	tRSqBrak,
+
 	// for keyword
 	tModule,
 	tProcedure,
