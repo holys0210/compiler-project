@@ -431,6 +431,34 @@ CToken* CScanner::Scan()
 			}
 			break;
 
+		case '&':
+			c = _in->peek();
+			if(c == '&'){
+				tokval += GetChar();
+				token = tAnd;
+			}
+			break;
+
+		case '|':
+			c = _in->peek();
+			if(c == '|'){
+				tokval += GetChar();
+				token = tOr;
+			}
+			break;
+
+		case '!':
+			token = tNot;
+			break;
+
+		case '[':
+			token = tLSqBrak;
+			break;
+
+		case ']':
+			token = tRSqBrak;
+			break;
+
     case ';':
       token = tSemicolon;
       break;
