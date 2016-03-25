@@ -558,6 +558,13 @@ CToken* CScanner::Scan()
 				GetChar();
 				break;
 			}
+			else if(c==EOF){
+				temp_tokval=tokval;
+				tokval = "not match right single quote \"";
+				tokval += temp_tokval;
+				tokval += "\"";
+				break;
+			}
 			else{
 				// meet ASCII character
 				tokval +=c;
