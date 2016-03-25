@@ -49,8 +49,6 @@ using namespace std;
 /// each member of this enumeration represents a token in SnuPL/0
 ///
 enum EToken {
-  tDigit=0,                         ///< a digit
-  tLetter,                          ///< a letter
   tPlusMinus,                       ///< '+' or '-'
   tMulDiv,                          ///< '*' or '/'
   tRelOp,                           ///< relational operator
@@ -67,14 +65,14 @@ enum EToken {
 
 	tComment,													///< for comment, not return to parser
 
-	tAnd,
-	tOr,
-	tNot,
-	tLSqBrak,
-	tRSqBrak,
+	tAnd,															///< '&&'
+	tOr,															///< '||'
+	tNot,															///< '!'
+	tLSqBrak,													///< '['
+	tRSqBrak,													///< ']'
 
-	tComma,
-	tColon,
+	tComma,														///< '''
+	tColon,														///< ':'
 
 
 	// for keyword
