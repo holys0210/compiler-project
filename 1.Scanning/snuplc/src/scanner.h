@@ -315,27 +315,6 @@ class CScanner {
     /// @retval false character is not white space
     bool IsWhite(char c) const;
 
-		/// @brief check if a character is alphabet or '_'
-		///
-		/// @param c character
-		/// @retval true character is alphabet or '_'
-		/// @retval false character is not alphabet or '_'
-		bool isletter(char c);
-
-		/// @brief check if a character is digit
-		///
-		/// @param c character
-		/// @retval true character is digit
-		/// @retval false character is not digit 
-		bool isdigit(char c);
-
-		/// @brief check if a character is correct after '\'
-		///
-		/// @param c character
-		/// @retval true character is 'n', 't', '\', ''', '"', '0'
-		/// @retval false character is other character
-		bool isAfterBS(char c);
-
     /// @}
 
 

@@ -243,12 +243,12 @@ string CToken::escape(const string text)
 
   while (*t != '\0') {
     switch (*t) {
-      //case '\n': s += "\\n";  break;
-      //case '\t': s += "\\t";  break;
-      //case '\0': s += "\\0";  break;
-      //case '\'': s += "\\'";  break;
-      //case '\"': s += "\\\""; break;
-      //case '\\': s += "\\\\"; break;
+      case '\n': s += "\\n";  break;
+      case '\t': s += "\\t";  break;
+      case '\0': s += "\\0";  break;
+      case '\'': s += "\\'";  break;
+      case '\"': s += "\\\""; break;
+      case '\\': s += "\\\\"; break;
       default :  s += *t;
     }
     t++;
@@ -354,14 +354,29 @@ CToken* CScanner::NewToken(EToken type, const string token)
   return new CToken(_saved_line, _saved_char, type, token);
 }
 
+/// @brief check if a character is alphabet or '_'
+///
+/// @param c character
+/// @retval true character is alphabet or '_'
+/// @retval false character is not alphabet or '_'
 bool isletter(char c){
 	return (('A'<=c) && (c <= 'Z')) || (('a' <= c) && (c <= 'z')) || (c == '_');
 }
 
+/// @brief check if a character is digit
+///
+/// @param c character
+/// @retval true character is digit
+/// @retval false character is not digit 
 bool isdigit(char c){
 	return (('0' <= c) && (c <= '9'));
 }
 
+/// @brief check if a character is correct after '\'
+///
+/// @param c character
+/// @retval true character is 'n', 't', '\', ''', '"', '0'
+/// @retval false character is other character
 bool isAfterBS(char c){
 	return (c =='n')||(c=='t')||(c=='"')||(c=='\'')||(c=='\\')||(c=='0');
 }
