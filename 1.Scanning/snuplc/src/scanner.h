@@ -49,8 +49,6 @@ using namespace std;
 /// each member of this enumeration represents a token in SnuPL/0
 ///
 enum EToken {
-  tDigit=0,                         ///< a digit
-  tLetter,                          ///< a letter
   tPlusMinus,                       ///< '+' or '-'
   tMulDiv,                          ///< '*' or '/'
   tRelOp,                           ///< relational operator
@@ -67,34 +65,34 @@ enum EToken {
 
 	tComment,													///< for comment, not return to parser
 
-	tAnd,
-	tOr,
-	tNot,
-	tLSqBrak,
-	tRSqBrak,
+	tAnd,															///< '&&'
+	tOr,															///< '||'
+	tNot,															///< '!'
+	tLSqBrak,													///< '['
+	tRSqBrak,													///< ']'
 
-	tComma,
-	tColon,
+	tComma,														///< '''
+	tColon,														///< ':'
 
 
 	// for keyword
-	tModule,
-	tProcedure,
-	tFunction,
-	tVar,
-	tInteger,
-	tBoolean,
-	tChar,
-	tBegin,
-	tEnd,
-	tIf,
-	tThen,
-	tElse,
-	tWhile,
-	tDo,
-	tReturn,
-	tTrue,
-	tFalse,
+	tModule,													///< module
+	tProcedure,												///< procedure
+	tFunction,												///< runction
+	tVar,															///< var
+	tInteger,													///< integer
+	tBoolean,													///< boolean
+	tChar,														///< char
+	tBegin,														///< begin
+	tEnd,															///< end
+	tIf,															///< if
+	tThen,														///< then
+	tElse,														///< else
+	tWhile,														///< while
+	tDo,															///< do
+	tReturn,													///< return
+	tTrue,														///< true
+	tFalse,														///< false
 
   tEOF,                             ///< end of file
   tIOError,                         ///< I/O error
