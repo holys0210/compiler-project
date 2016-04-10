@@ -571,7 +571,7 @@ CToken* CScanner::Scan()
 			}
 			else if(c==EOF){
 				temp_tokval=tokval;
-				tokval = "not match right single quote \"";
+				tokval = "not match right double quote \"";
 				tokval += temp_tokval;
 				tokval += "\"";
 				break;
