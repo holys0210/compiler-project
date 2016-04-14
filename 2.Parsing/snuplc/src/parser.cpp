@@ -123,12 +123,43 @@ CAstModule* CParser::module(void)
 {
   //
   // module ::= statSequence  ".".
+	// "module" ident ";" varDeclaration { subroutineDecl }
+	// "begin" statSequence "end" ident "."
   //
   CToken dummy;
-  CAstModule *m = new CAstModule(dummy, "placeholder");
+	Consume(tModule, &dummy);
+
+	CToken module_name;
+	Consume(tIdent,  &module_name);
+
+	Consume(tSemicolon, &dummy);
+	
+	// varDeclaration
+
+	// subroutineDecl
+
+  CAstModule *m = new CAstModule(dummy, module_name.GetValue());
+
+	// begin
+	Consume(tBegin, &dummy);
+
+	// statSequence
   CAstStatement *statseq = NULL;
 
   statseq = statSequence(m);
+
+	// end
+	Consume(tEnd, &dummy);
+
+	// ident
+	CToken end_module_name;
+	Consume(tIdent, &end_module_name); 
+
+	if(module_name.GetValue()!=end_module_name.GetValue()){
+		SetError(end_module_name, "Not mahch on module name");
+	}
+
+	// "."
   Consume(tDot);
 
   m->SetStatementSequence(statseq);
@@ -142,12 +173,12 @@ CAstStatement* CParser::statSequence(CAstScope *s)
   // statSequence ::= [ statement { ";" statement } ].
   // statement ::= assignment.
   // FIRST(statSequence) = { tNumber }
-  // FOLLOW(statSequence) = { tDot }
+  // FOLLOW(statSequence) = { tEnd }
   //
   CAstStatement *head = NULL;
 
   EToken tt = _scanner->Peek().GetType();
-  if (!(tt == tDot)) {
+  if (!(tt == tEnd)) {
     CAstStatement *tail = NULL;
 
     do {
@@ -172,7 +203,7 @@ CAstStatement* CParser::statSequence(CAstScope *s)
       tail = st;
 
       tt = _scanner->Peek().GetType();
-      if (tt == tDot) break;
+      if (tt == tEnd) break;
 
       Consume(tSemicolon);
     } while (!_abort);
