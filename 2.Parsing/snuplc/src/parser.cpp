@@ -140,11 +140,9 @@ CAstModule* CParser::module(void)
 	// varDeclaration
 	varDeclaration(m);
 
-	// TODO
-	
-
 	// subroutineDecl
 	// TODO
+	subroutineDecl(m);
 
 
 	// begin
@@ -406,8 +404,6 @@ void CParser::varDeclaration(CAstModule* m){
 			Consume(tComma, &dummy);
 		}
 
-		// TODO:type
-		//type();
 		// type
 		const CScalarType* var_type=type();
 
@@ -445,8 +441,58 @@ const CScalarType* CParser::type(){
 
 			default:
 				//error (temporary handling error)
+				//TODO
 				Consume(tInteger, &dummy);
 		}
+		//TODO
+		// array
+}
+
+void CParser::subroutineDecl(CAstModule* m){
+	EToken tt=_scanner->Peek().GetType();
+	CToken dummy;
+
+	switch(tt){
+		case tProcedure:
+			procedure(m);
+			break;
+
+		case tFunction:
+		//TODO
+	//		function(m);
+			break;
+
+		case tBegin:
+			return;
+
+		default:
+			//error
+			//TODO
+			Consume(tBegin, &dummy);
+	}
+
+	// subroutineBody();
+
+	//ident
+
+	// ";"
+
+
+}
+
+CAstProcedure* CParser::procedure(CAstModule* m){
+	CToken dummy, name;
+
+	Consume(tProcedure, &dummy);
+	Consume(tIdent, &name);
+	Consume(tSemicolon, &dummy);
+
+	// procedure's return value is void, NULL
+	CSymProc* sym_proc = new CSymProc(name.GetValue(), CTypeManager::Get()->GetNull());
+	CAstProcedure *proc = new CAstProcedure(name, name.GetValue(), m, sym_proc);
+
+	return proc;
+
 }
 
 

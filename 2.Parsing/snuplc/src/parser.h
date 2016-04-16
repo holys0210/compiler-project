@@ -110,6 +110,8 @@ class CParser {
 
 		void 							varDeclaration(CAstModule* m);
 		const CScalarType*			type(void);
+		void 							subroutineDecl(CAstModule* m);
+		CAstProcedure*		procedure(CAstModule* m);
 
     /// @}
 
