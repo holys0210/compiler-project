@@ -382,7 +382,7 @@ void CParser::varDeclaration(CAstModule* m){
 	Consume(tVarDecl, &dummy);
 
 	// typedef for varDecl
-	CToken id[16], type;
+	CToken id[16];
 	int index;
 
 	CSymtab* mod_symtab=m->GetSymbolTable();
@@ -409,24 +409,7 @@ void CParser::varDeclaration(CAstModule* m){
 		// TODO:type
 		//type();
 		// type
-		tt=_scanner->Peek().GetType();
-		const CScalarType* var_type=NULL;
-		switch(tt){
-			case tInteger:
-				var_type= CTypeManager::Get()->GetInt();
-				break;
-			case tBoolean:
-				var_type= CTypeManager::Get()->GetBool();
-				break;
-			case tChar:
-				var_type = CTypeManager::Get()->GetChar();
-				break;
-
-			default:
-				//error (temporary handling error)
-				Consume(tInteger, &dummy);
-		}
-		Consume(tt, &type);
+		const CScalarType* var_type=type();
 
 		//add symbol to symtab
 		for(int i=0; i<index; i++){
@@ -441,6 +424,29 @@ void CParser::varDeclaration(CAstModule* m){
 		}
 	}while(!_abort);
 
+}
+
+const CScalarType* CParser::type(){
+		CToken dummy;
+		EToken tt=_scanner->Peek().GetType();
+		switch(tt){
+			case tInteger:
+				Consume(tt, &dummy);
+				return CTypeManager::Get()->GetInt();
+				break;
+			case tBoolean:
+				Consume(tt, &dummy);
+				return CTypeManager::Get()->GetBool();
+				break;
+			case tChar:
+				Consume(tt, &dummy);
+				return CTypeManager::Get()->GetChar();
+				break;
+
+			default:
+				//error (temporary handling error)
+				Consume(tInteger, &dummy);
+		}
 }
 
 
