@@ -126,6 +126,7 @@ CAstModule* CParser::module(void)
 	// "module" ident ";" varDeclaration { subroutineDecl }
 	// "begin" statSequence "end" ident "."
   //
+
   CToken dummy;
 	Consume(tModule, &dummy);
 
@@ -373,14 +374,6 @@ void CParser::varDeclaration(CAstModule* m){
 
 	EToken tt = _scanner->Peek().GetType();
 	if((tt==tBegin)||(tt==tProcedure)||(tt==tFunction)){
-		cout<< tt<< endl;
-		cout<< _scanner->Peek().GetType()<<endl;
-		cout<< _scanner->Peek().GetName()<<endl;
-		cout<< _scanner->Peek().GetType()<<endl;
-		cout<< _scanner->Peek().GetType()<<endl;
-		cout<< tBegin<<endl;
-		cout<< tProcedure<<endl;
-		cout<< tFunction<<endl;
 		return;
 	}
 
@@ -392,24 +385,54 @@ void CParser::varDeclaration(CAstModule* m){
 	CToken id[16], type;
 	int index;
 
+	CSymtab* mod_symtab=m->GetSymbolTable();
+
 	// varDeclSequence + ";"
 	do {
 		tt = _scanner->Peek().GetType();
 
-		// varDecl
+		// varDecl = ident { "," ident } ":" type
 		index=0;
+		//ident
 		while(1){
 			Consume(tIdent, &id[index++]);
 
 			if(_scanner->Peek().GetType() == tColon){
+				// ":"
 				Consume(tColon, &dummy);
 				break;
 			}
+			// ","
 			Consume(tComma, &dummy);
 		}
 
 		// TODO:type
 		//type();
+		// type
+		tt=_scanner->Peek().GetType();
+		const CScalarType* var_type=NULL;
+		switch(tt){
+			case tInteger:
+				var_type= CTypeManager::Get()->GetInt();
+				break;
+			case tBoolean:
+				var_type= CTypeManager::Get()->GetBool();
+				break;
+			case tChar:
+				var_type = CTypeManager::Get()->GetChar();
+				break;
+
+			default:
+				//error (temporary handling error)
+				Consume(tInteger, &dummy);
+		}
+		Consume(tt, &type);
+
+		//add symbol to symtab
+		for(int i=0; i<index; i++){
+			mod_symtab->AddSymbol(m->CreateVar(id[i].GetValue(), var_type));
+		}
+		/////////
 
 		Consume(tSemicolon, &dummy);
 		tt=_scanner->Peek().GetType();
