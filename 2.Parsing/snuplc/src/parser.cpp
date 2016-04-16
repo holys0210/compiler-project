@@ -132,13 +132,19 @@ CAstModule* CParser::module(void)
 	CToken module_name;
 	Consume(tIdent,  &module_name);
 
+	// ";"
 	Consume(tSemicolon, &dummy);
 	
+  CAstModule *m = new CAstModule(dummy, module_name.GetValue());
 	// varDeclaration
+	varDeclaration(m);
+
+	// TODO
+	
 
 	// subroutineDecl
+	// TODO
 
-  CAstModule *m = new CAstModule(dummy, module_name.GetValue());
 
 	// begin
 	Consume(tBegin, &dummy);
@@ -355,4 +361,63 @@ CAstConstant* CParser::number(void)
 
   return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
 }
+
+void CParser::varDeclaration(CAstModule* m){
+	//
+	// "var" varDeclSequence ";"
+	// varDeclSequence = varDecl { ";" varDecl }
+	// varDecl = ident { "," ident } ":" type
+	// FOLLOW(varDeclaration)={"begin", "procedure", "function"}
+	// another varDeclaration exists, but this grammer is not LL(1)
+	//
+
+	EToken tt = _scanner->Peek().GetType();
+	if((tt==tBegin)||(tt==tProcedure)||(tt==tFunction)){
+		cout<< tt<< endl;
+		cout<< _scanner->Peek().GetType()<<endl;
+		cout<< _scanner->Peek().GetName()<<endl;
+		cout<< _scanner->Peek().GetType()<<endl;
+		cout<< _scanner->Peek().GetType()<<endl;
+		cout<< tBegin<<endl;
+		cout<< tProcedure<<endl;
+		cout<< tFunction<<endl;
+		return;
+	}
+
+	// "var"
+	CToken dummy;
+	Consume(tVarDecl, &dummy);
+
+	// typedef for varDecl
+	CToken id[16], type;
+	int index;
+
+	// varDeclSequence + ";"
+	do {
+		tt = _scanner->Peek().GetType();
+
+		// varDecl
+		index=0;
+		while(1){
+			Consume(tIdent, &id[index++]);
+
+			if(_scanner->Peek().GetType() == tColon){
+				Consume(tColon, &dummy);
+				break;
+			}
+			Consume(tComma, &dummy);
+		}
+
+		// TODO:type
+		//type();
+
+		Consume(tSemicolon, &dummy);
+		tt=_scanner->Peek().GetType();
+		if((tt==tBegin)||(tt==tProcedure)||(tt==tFunction)){
+			break;
+		}
+	}while(!_abort);
+
+}
+
 

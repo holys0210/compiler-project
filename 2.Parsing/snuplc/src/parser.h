@@ -108,6 +108,8 @@ class CParser {
 
     CAstConstant*     number(void);
 
+		void 							varDeclaration(CAstModule* m);
+
     /// @}
 
 
