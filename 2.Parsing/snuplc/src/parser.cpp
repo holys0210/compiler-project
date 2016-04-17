@@ -463,8 +463,7 @@ void CParser::subroutineDecl(CAstModule* m){
 			break;
 
 		case tFunction:
-		//TODO
-	//		function(m);
+			functionDecl(m);
 			break;
 
 		case tBegin:
@@ -506,7 +505,37 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 
 	Consume(tSemicolon, &dummy);
 
-	proc->GetSymbol()->print(cout,4);
+
+	return proc;
+
+}
+
+CAstProcedure* CParser::functionDecl(CAstModule* m){
+	//
+	// functionDecl = "function" ident [ formalParam ] ":" type ";"
+	//
+	CToken dummy, name;
+
+	Consume(tFunction, &dummy);
+	Consume(tIdent, &name);
+
+	CSymProc* sym_proc = new CSymProc(name.GetValue(), CTypeManager::Get()->GetNull());
+	CAstProcedure *proc = new CAstProcedure(name, name.GetValue(), m, sym_proc);
+
+	EToken tt= _scanner->Peek().GetType();
+	if(tt == tLParens){
+		formalParam(proc);
+	}
+
+	Consume(tColon, &dummy);
+
+	const CScalarType* var_type=type();
+
+	Consume(tSemicolon, &dummy);
+
+	//TODO
+	//change return type
+
 
 	return proc;
 

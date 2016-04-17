@@ -112,6 +112,7 @@ class CParser {
 		const CScalarType*			type(void);
 		void 							subroutineDecl(CAstModule* m);
 		CAstProcedure*		procedureDecl(CAstModule* m);
+		CAstProcedure*		functionDecl(CAstModule* m);
 		void 							formalParam(CAstProcedure* proc);
 		void 							varDeclSequence(CAstProcedure* proc);
 		void 							varDecl(CAstProcedure* proc);
