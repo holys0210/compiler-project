@@ -142,7 +142,12 @@ CAstModule* CParser::module(void)
 
 	// subroutineDecl
 	// TODO
-	subroutineDecl(m);
+	// FIRST(subroutineDecl)={"procedure", "function"}
+	EToken tt=_scanner->Peek().GetType();
+	while((tt== tProcedure)||(tt==tFunction)){
+		subroutineDecl(m);
+		tt=_scanner->Peek().GetType();
+	}
 
 
 	// begin
@@ -454,7 +459,7 @@ void CParser::subroutineDecl(CAstModule* m){
 
 	switch(tt){
 		case tProcedure:
-			procedure(m);
+			procedureDecl(m);
 			break;
 
 		case tFunction:
@@ -480,19 +485,92 @@ void CParser::subroutineDecl(CAstModule* m){
 
 }
 
-CAstProcedure* CParser::procedure(CAstModule* m){
+CAstProcedure* CParser::procedureDecl(CAstModule* m){
+	//
+	// procedureDecl = "procedure" ident [ formalParam ] ";"
+	//
 	CToken dummy, name;
 
 	Consume(tProcedure, &dummy);
 	Consume(tIdent, &name);
-	Consume(tSemicolon, &dummy);
 
+	// create AstNode
 	// procedure's return value is void, NULL
 	CSymProc* sym_proc = new CSymProc(name.GetValue(), CTypeManager::Get()->GetNull());
 	CAstProcedure *proc = new CAstProcedure(name, name.GetValue(), m, sym_proc);
+
+	EToken tt= _scanner->Peek().GetType();
+	if(tt == tLParens){
+		formalParam(proc);
+	}
+
+	Consume(tSemicolon, &dummy);
+
 
 	return proc;
 
 }
 
+void CParser::formalParam(CAstProcedure* proc){
+	//
+	// formalParam = "(" [ varDeclSequence ] ")"
+	//
+
+	CToken dummy;
+	Consume(tLParens, &dummy);
+
+
+	EToken tt=_scanner->Peek().GetType();
+	// FIRST(varDeclSequence) = { ident}
+	if(tt==tIdent){
+		varDeclSequence(proc);
+	}
+
+	Consume(tRParens, &dummy);
+}
+
+
+void CParser::varDeclSequence(CAstProcedure* proc){
+	//
+	// varDeclSequence = varDecl { ";" vrDecl }
+	//
+
+	CToken dummy;
+	varDecl(proc);
+
+	while(_scanner->Peek().GetType() == tSemicolon){
+		Consume(tSemicolon, &dummy);
+		varDecl(proc);
+	}
+
+}
+
+void CParser::varDecl(CAstProcedure* proc){
+	//
+	// varDecl = ident { "," ident } ":" type
+	//
+
+	CToken id[16], dummy;
+	EToken  tt;
+
+	int index=0;
+
+	while(1){
+		Consume(tIdent, &id[index++]);
+
+		if(_scanner->Peek().GetType() == tColon){
+			Consume(tColon, &dummy);
+			break;
+		}
+		Consume(tComma, &dummy);
+	}
+	
+	const CScalarType* var_type=type();
+	CSymtab* symtab = proc->GetSymbolTable();
+
+	for(int i=0; i<index; i++){
+		symtab->AddSymbol(proc->CreateVar(id[i].GetValue(), var_type));
+	}
+
+}
 
