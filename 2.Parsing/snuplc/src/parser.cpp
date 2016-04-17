@@ -506,6 +506,7 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 
 	Consume(tSemicolon, &dummy);
 
+	proc->GetSymbol()->print(cout,4);
 
 	return proc;
 
@@ -567,9 +568,11 @@ void CParser::varDecl(CAstProcedure* proc){
 	
 	const CScalarType* var_type=type();
 	CSymtab* symtab = proc->GetSymbolTable();
+	CSymProc* symproc = proc->GetSymbol();
 
 	for(int i=0; i<index; i++){
 		symtab->AddSymbol(proc->CreateVar(id[i].GetValue(), var_type));
+		symproc->AddParam(new CSymParam(i, id[i].GetValue(), var_type));
 	}
 
 }
