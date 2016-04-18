@@ -479,8 +479,17 @@ void CParser::subroutineDecl(CAstModule* m){
 	subroutineBody(proc);
 
 	//ident
+	CToken end_proc_name;
+	Consume(tIdent, &end_proc_name);
+
+	if(end_proc_name.GetValue()!=proc->GetName()){
+		SetError(end_proc_name, "Not match on subroutine name");
+	}
+
 
 	// ";"
+	Consume(tSemicolon, &dummy);
+
 
 
 }
