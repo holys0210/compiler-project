@@ -366,7 +366,7 @@ CAstConstant* CParser::number(void)
   return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
 }
 
-void CParser::varDeclaration(CAstModule* m){
+void CParser::varDeclaration(CAstScope* m){
 	//
 	// "var" varDeclSequence ";"
 	// varDeclSequence = varDecl { ";" varDecl }
@@ -456,14 +456,15 @@ const CScalarType* CParser::type(){
 void CParser::subroutineDecl(CAstModule* m){
 	EToken tt=_scanner->Peek().GetType();
 	CToken dummy;
+	CAstProcedure* proc;
 
 	switch(tt){
 		case tProcedure:
-			procedureDecl(m);
+			proc=procedureDecl(m);
 			break;
 
 		case tFunction:
-			functionDecl(m);
+			proc=functionDecl(m);
 			break;
 
 		case tBegin:
@@ -475,7 +476,7 @@ void CParser::subroutineDecl(CAstModule* m){
 			Consume(tBegin, &dummy);
 	}
 
-	// subroutineBody();
+	subroutineBody(proc);
 
 	//ident
 
@@ -614,3 +615,18 @@ void CParser::varDecl(CAstProcedure* proc){
 
 }
 
+void CParser::subroutineBody(CAstProcedure* proc){
+	//
+	// subroutineBody = varDeclaration "begin" statSequence "end"
+	//
+	varDeclaration(proc);
+
+	CToken dummy;
+
+	Consume(tBegin, &dummy);
+
+	// statSequence(proc);
+
+	Consume(tEnd, &dummy);
+
+}

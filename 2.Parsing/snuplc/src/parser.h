@@ -108,7 +108,7 @@ class CParser {
 
     CAstConstant*     number(void);
 
-		void 							varDeclaration(CAstModule* m);
+		void 							varDeclaration(CAstScope* m);
 		const CScalarType*			type(void);
 		void 							subroutineDecl(CAstModule* m);
 		CAstProcedure*		procedureDecl(CAstModule* m);
@@ -116,6 +116,7 @@ class CParser {
 		void 							formalParam(CAstProcedure* proc);
 		void 							varDeclSequence(CAstProcedure* proc);
 		void 							varDecl(CAstProcedure* proc);
+		void							subroutineBody(CAstProcedure* proc);
 
     /// @}
 
