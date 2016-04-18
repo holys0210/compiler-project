@@ -357,8 +357,9 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 
 	tt=_scanner->Peek().GetType();
 	EOperation termop;
+	cout<<_scanner->Peek().GetName()<<endl;
 
-  while ((tt==tPlusMinus)||(tt==tAnd)) {
+  while ((tt==tPlusMinus)||(tt==tOr)) {
     CToken t;
     CAstExpression *l = n, *r;
 
@@ -368,9 +369,9 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 				termop= t.GetValue() == "+" ? opAdd : opSub;
 				break;
 
-			case tAnd:
-				Consume(tAnd, &t);
-				termop=opAnd;
+			case tOr:
+				Consume(tOr, &t);
+				termop=opOr;
 				break;
 		}
 
@@ -388,7 +389,7 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 CAstExpression* CParser::term(CAstScope *s)
 {
   //
-  // term ::= factor { ("*"|"/") factor }.
+  // term ::= factor { ("*"|"/"|"&&") factor }.
   //
   CAstExpression *n = NULL;
 
