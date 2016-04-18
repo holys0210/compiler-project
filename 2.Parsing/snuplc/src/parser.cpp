@@ -339,11 +339,21 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 {
   //
   // simpleexpr ::= ["+"|"-"] term { termOp term }.
+	// ["+"|"-'] is stronger than termOp
   //
+	EToken tt = _scanner->Peek().GetType();
 	
-  CAstExpression *n = NULL;
+  CAstExpression *n= NULL;
 
-  n = term(s);
+	if(tt==tPlusMinus){
+		CToken sign;
+		Consume(tPlusMinus, &sign);
+		CAstExpression* m =term(s);
+		n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
+	}
+	else{
+		n = term(s);
+	}
 
   while (_scanner->Peek().GetType() == tPlusMinus) {
     CToken t;
