@@ -355,15 +355,30 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 		n = term(s);
 	}
 
-  while (_scanner->Peek().GetType() == tPlusMinus) {
+	tt=_scanner->Peek().GetType();
+	EOperation termop;
+
+  while ((tt==tPlusMinus)||(tt==tAnd)) {
     CToken t;
     CAstExpression *l = n, *r;
 
-    Consume(tPlusMinus, &t);
+		switch(tt){
+			case tPlusMinus:
+				Consume(tPlusMinus, &t);
+				termop= t.GetValue() == "+" ? opAdd : opSub;
+				break;
+
+			case tAnd:
+				Consume(tAnd, &t);
+				termop=opAnd;
+				break;
+		}
 
     r = term(s);
 
-    n = new CAstBinaryOp(t, t.GetValue() == "+" ? opAdd : opSub, l, r);
+    n = new CAstBinaryOp(t, termop, l, r);
+
+		tt=_scanner->Peek().GetType();
   }
 
 
