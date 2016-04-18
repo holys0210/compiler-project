@@ -318,8 +318,14 @@ CAstExpression* CParser::expression(CAstScope* s)
     Consume(tRelOp, &t);
     right = simpleexpr(s);
 
-		if (t.GetValue() == "=")       relop = opEqual;
-		else if (t.GetValue() == "#")  relop = opNotEqual;
+		string relop_str=t.GetValue();
+
+		if (relop_str == "=")       relop = opEqual;
+		else if (relop_str == "#")  relop = opNotEqual;
+		else if (relop_str == "<")	relop = opLessThan;
+		else if (relop_str == "<=")	relop = opLessEqual;
+		else if (relop_str == ">") 	relop = opBiggerThan;
+		else if (relop_str == ">=")	relop = opBiggerEqual;
 		else SetError(t, "invalid relation.");
 
 		return new CAstBinaryOp(t, relop, left, right);
