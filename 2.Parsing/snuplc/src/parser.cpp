@@ -256,17 +256,45 @@ CAstStatAssign* CParser::assignment(CAstScope *s, CToken name)
 {
   //
 	// assignment ::= qualident ":=" expression
-	// qualident ::= ident { "[" expression "]" } 
   //
   CToken t;
 
-	CAstDesignator* lhs = qualident(s);
+	CAstDesignator* lhs = qualident(s, name);
   Consume(tAssign, &t);
 
   CAstExpression *rhs = expression(s);
 
   return new CAstStatAssign(t, lhs, rhs);
 }
+
+CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
+	//
+	// qualident ::= ident { "[" expression "]" } 
+	// qualident->factor->term->simpleexpr->expression->returnStatment->statment->statSeqeunce
+	//
+
+	EToken tt = _scanner->Peek().GetType();
+
+	CSymtab* symtab=s->GetSymbolTable();
+	const CSymbol* sym = symtab->FindSymbol(name.GetValue());
+	if(sym==NULL){
+		SetError(name, "No identifier in symbol table");
+	}
+	CAstDesignator *design=NULL;
+
+
+	if(!(tt == tLBrak)){
+		// non-array
+		design= new CAstDesignator(name, sym);
+		
+	}
+	else{
+
+
+	}
+	return design;
+}
+
 
 
 CAstExpression* CParser::expression(CAstScope* s)
@@ -667,7 +695,7 @@ void CParser::subroutineBody(CAstProcedure* proc){
 
 	Consume(tBegin, &dummy);
 
-	// statSequence(proc);
+	statSequence(proc);
 
 	Consume(tEnd, &dummy);
 
@@ -751,7 +779,7 @@ CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
 	EToken tt = _scanner->Peek().GetType();
 	switch(tt){
 		case tLBrak:
-		case tColon:
+		case tAssign:
 			st = assignment(s, name);
 			break;
 
