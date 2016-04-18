@@ -690,6 +690,11 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 	//proc->GetSymbol()->print(cout, 4);
 	//
 
+	// add subroutine name into symbol table of module
+	CSymtab *symtab= m->GetSymbolTable();
+	symtab->AddSymbol(sym_proc);
+
+
 
 	return proc;
 
@@ -725,6 +730,10 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 	// print for check
 	//proc->GetSymbol()->print(cout, 4);
 	//
+
+	// add subroutine name into symbol table of module
+	CSymtab *symtab= m->GetSymbolTable();
+	symtab->AddSymbol(sym_proc);
 
 	return proc;
 
@@ -909,6 +918,6 @@ CAstStatement* CParser::subroutineCall_stat(CAstScope* s, CToken a){
 }
 
 CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
-	return NULL;
+
 }
 
