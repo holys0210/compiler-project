@@ -505,6 +505,10 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 
 	Consume(tSemicolon, &dummy);
 
+	// print for check
+	//proc->GetSymbol()->print(cout, 4);
+	//
+
 
 	return proc;
 
@@ -533,9 +537,13 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 
 	Consume(tSemicolon, &dummy);
 
-	//TODO
 	//change return type
+	sym_proc->SetDataType(var_type);
 
+	
+	// print for check
+	//proc->GetSymbol()->print(cout, 4);
+	//
 
 	return proc;
 
