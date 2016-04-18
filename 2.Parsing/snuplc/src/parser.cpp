@@ -357,7 +357,6 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 
 	tt=_scanner->Peek().GetType();
 	EOperation termop;
-	cout<<_scanner->Peek().GetName()<<endl;
 
   while ((tt==tPlusMinus)||(tt==tOr)) {
     CToken t;
@@ -446,7 +445,7 @@ CAstExpression* CParser::factor(CAstScope *s)
 
 			// subroutineCall
 			if(tt==tLParens){
-				// n = subroutineCall(s, n);
+				 n = subroutineCall_expr(s, t);
 			}
 			// qualident
 			else{
@@ -463,13 +462,15 @@ CAstExpression* CParser::factor(CAstScope *s)
 
 		// factor ::= boolean
 		case tBoolean:
-//			n = boolean();
+			n = boolean();
 			break;
 
+		// factor ::= character
 		case tChar:
 //			n = character()
 			break;
 
+		// factor ::= string 
 		case tString:
 			Consume(tString, &t);
 			n = new CAstStringConstant(t, t.GetValue(), s);
@@ -482,9 +483,10 @@ CAstExpression* CParser::factor(CAstScope *s)
       Consume(tRParens);
       break;
 
+		// factor ::= "!" factor
 		case tNot:
-			Consume(tNot);
-			n = factor(s);
+			Consume(tNot, &t);
+			n = new CAstUnaryOp(t, opNop, factor(s));
 			break;
 
 
@@ -901,15 +903,12 @@ CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
 
 }
 		
-CAstStatement* CParser::subroutineCall(CAstScope* s){
-	CToken name;
-	Consume(tIdent, &name);
-
-	subroutineCall(s, name);
+CAstStatement* CParser::subroutineCall_stat(CAstScope* s, CToken a){
 	return NULL;
+
 }
 
-CAstStatement* CParser::subroutineCall(CAstScope* s, CToken a){
+CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 	return NULL;
 }
 

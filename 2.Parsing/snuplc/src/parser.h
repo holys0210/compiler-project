@@ -120,10 +120,10 @@ class CParser {
 		void							subroutineBody(CAstProcedure* proc);
 
 		CAstStatement*				assignment_or_subroutineCall(CAstScope* s);
-		CAstStatement*		subroutineCall(CAstScope* s);
-		CAstStatement*		subroutineCall(CAstScope* s, CToken a);
+		CAstStatement*		subroutineCall_stat(CAstScope* s, CToken a);
 
 		CAstDesignator*		qualident(CAstScope* s, CToken name);
+		CAstFunctionCall*	subroutineCall_expr(CAstScope* s, CToken name);
 
     /// @}
 
