@@ -99,7 +99,7 @@ class CParser {
 
     CAstStatement*    statSequence(CAstScope *s);
 
-    CAstStatAssign*   assignment(CAstScope *s);
+    CAstStatAssign*   assignment(CAstScope *s, CToken name);
 
     CAstExpression*   expression(CAstScope *s);
     CAstExpression*   simpleexpr(CAstScope *s);
@@ -117,6 +117,10 @@ class CParser {
 		void 							varDeclSequence(CAstProcedure* proc);
 		void 							varDecl(CAstProcedure* proc);
 		void							subroutineBody(CAstProcedure* proc);
+
+		CAstStatement*				assignment_or_subroutineCall(CAstScope* s);
+		CAstStatement*		subroutineCall(CAstScope* s);
+		CAstStatement*		subroutineCall(CAstScope* s, CToken a);
 
     /// @}
 

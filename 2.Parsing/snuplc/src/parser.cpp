@@ -188,40 +188,54 @@ CAstStatement* CParser::statSequence(CAstScope *s)
   CAstStatement *head = NULL;
 
   EToken tt = _scanner->Peek().GetType();
-  if (!(tt == tEnd)) {
-    CAstStatement *tail = NULL;
+  if ((tt == tEnd)||(tt==tElse)) {
+		return head;
+	}
 
-    do {
-      CToken t;
-      EToken tt = _scanner->Peek().GetType();
-      CAstStatement *st = NULL;
+	CAstStatement *tail = NULL;
 
-      switch (tt) {
-        // statement ::= assignment
-        case tNumber:
-          st = assignment(s);
-          break;
+	do {
+		CToken t;
+		EToken tt = _scanner->Peek().GetType();
+		CAstStatement *st = NULL;
 
-        default:
-          SetError(_scanner->Peek(), "statement expected.");
-          break;
-      }
+		switch (tt) {
+			// statement ::= assignment
+			case tIdent:
+				st = assignment_or_subroutineCall(s);
+				break;
 
-      assert(st != NULL);
-      if (head == NULL) head = st;
-      else tail->SetNext(st);
-      tail = st;
+			case tIf:
+				//ifStatement(s);
+				break;
 
-      tt = _scanner->Peek().GetType();
-      if (tt == tEnd) break;
+			case tWhile:
+				//whileStatement(s);
+				break;
 
-      Consume(tSemicolon);
-    } while (!_abort);
-  }
+			case tReturn:
+				//returnStatment(s);
+				break;
+
+			default:
+				SetError(_scanner->Peek(), "statement expected.");
+				break;
+		}
+
+		assert(st != NULL);
+		if (head == NULL) head = st;
+		else tail->SetNext(st);
+		tail = st;
+
+		tt = _scanner->Peek().GetType();
+		if ((tt == tEnd)||(tt== tElse)) break;
+
+		Consume(tSemicolon);
+	} while (!_abort);
 
   return head;
 }
-
+/*
 CAstStatAssign* CParser::assignment(CAstScope *s)
 {
   //
@@ -236,6 +250,24 @@ CAstStatAssign* CParser::assignment(CAstScope *s)
 
   return new CAstStatAssign(t, lhs, rhs);
 }
+*/
+
+CAstStatAssign* CParser::assignment(CAstScope *s, CToken name)
+{
+  //
+	// assignment ::= qualident ":=" expression
+	// qualident ::= ident { "[" expression "]" } 
+  //
+  CToken t;
+
+	CAstDesignator* lhs = qualident(s);
+  Consume(tAssign, &t);
+
+  CAstExpression *rhs = expression(s);
+
+  return new CAstStatAssign(t, lhs, rhs);
+}
+
 
 CAstExpression* CParser::expression(CAstScope* s)
 {
@@ -316,7 +348,8 @@ CAstExpression* CParser::term(CAstScope *s)
 CAstExpression* CParser::factor(CAstScope *s)
 {
   //
-  // factor ::= number | "(" expression ")"
+	// factor ::= qualident | number | boolean | char | string
+	//					| "(" expression ")" | subroutineCall | "!" factor
   //
   // FIRST(factor) = { tNumber, tLBrak }
   //
@@ -639,3 +672,108 @@ void CParser::subroutineBody(CAstProcedure* proc){
 	Consume(tEnd, &dummy);
 
 }
+/*
+CAstStatement* CParser::statSequence(CAstScope* s){
+	//
+	// statSequence = [ statement { ";" statement } ]
+	// FIRST(statSequence) = { ident, "if", "while", "return" }
+	// FOLLOW(statSequence) = { "end", "else" }
+	//
+	CAstStatement* head = NULL;
+
+	EToken tt = _scanner->Peek().GetType();
+	bool escape=false;
+
+	if( !((tt == tEnd)||(tt == tElse))){
+		CAstStatement* tail=NULL;
+
+		do {
+			CToken t;
+			tt =_scanner->Peek().GetType();
+			CAstStatement* st=NULL;
+
+			switch(tt){
+				case tIdent:
+					st = assignemt_or_subroutinCall(s);
+					break;
+
+				case tIf:
+					//ifStatement(s);
+					break;
+
+				case tWhile:
+					//whileStatement(s);
+					break;
+
+				case tReturn:
+					//returnStatment(s);
+					break;
+
+				default:
+					SetError(_scanner->Peek(), "statement expected.");
+					break;
+			}
+
+			assert(st != NULL);
+			if ( head ==NULL){
+				head =st;
+			}
+			else{
+				tail->SetNext(st);
+				tail=st;
+			}
+
+			tt= _scanner->Peek().GetType();
+			
+			if(tt == tEnd){
+				break;
+			}
+
+			Consume(tSemicolon);
+		}while(!_abort);
+	}
+
+
+	return head;
+}
+*/
+CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
+	//
+	// assignment_or_subroutinCall = ident ...
+	// ... = "[" || ":" -> assignment
+	//		 = '(" 				-> subroutineCall
+	//
+
+	CToken name;
+	Consume(tIdent, &name);
+
+	CAstStatement *st=NULL;
+	EToken tt = _scanner->Peek().GetType();
+	switch(tt){
+		case tLBrak:
+		case tColon:
+			st = assignment(s, name);
+			break;
+
+		case tLParens:
+			//subroutineCall(s, name);
+			break;
+
+	}
+
+	return st;
+
+}
+		
+CAstStatement* CParser::subroutineCall(CAstScope* s){
+	CToken name;
+	Consume(tIdent, &name);
+
+	subroutineCall(s, name);
+	return NULL;
+}
+
+CAstStatement* CParser::subroutineCall(CAstScope* s, CToken a){
+	return NULL;
+}
+
