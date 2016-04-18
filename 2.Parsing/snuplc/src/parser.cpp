@@ -397,15 +397,26 @@ CAstExpression* CParser::term(CAstScope *s)
 
   EToken tt = _scanner->Peek().GetType();
 
-  while ((tt == tMulDiv)) {
+  while ((tt == tMulDiv)||(tt==tAnd)) {
     CToken t;
     CAstExpression *l = n, *r;
+		EOperation factop;
 
-    Consume(tMulDiv, &t);
+		switch(tt){
+			case tMulDiv:
+				Consume(tMulDiv, &t);
+				factop= t.GetValue() == "*" ? opMul : opDiv;
+				break;
+
+			case tAnd:
+				Consume(tAnd, &t);
+				factop = opAnd;
+				break;
+		}
 
     r = factor(s);
 
-    n = new CAstBinaryOp(t, t.GetValue() == "*" ? opMul : opDiv, l, r);
+    n = new CAstBinaryOp(t, factop, l, r);
 
     tt = _scanner->Peek().GetType();
   }
