@@ -280,19 +280,25 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 	if(sym==NULL){
 		SetError(name, "No identifier in symbol table");
 	}
-	CAstDesignator *design=NULL;
 
 
 	if(!(tt == tLBrak)){
 		// non-array
-		design= new CAstDesignator(name, sym);
-		
+		return new CAstDesignator(name, sym);
 	}
 	else{
+		CAstArrayDesignator* design=new CAstArrayDesignator(name, sym);
+		do{
+			Consume(tLBrak);
+			CAstExpression* expr=expression(s);
+			Consume(tRBrak);
+			design->AddIndex(expr);
 
-
+			tt=_scanner->Peek().GetType();
+		}while(tt==tLBrak);
+		return design;
 	}
-	return design;
+
 }
 
 
