@@ -318,21 +318,23 @@ CAstExpression* CParser::expression(CAstScope* s)
     Consume(tRelOp, &t);
     right = simpleexpr(s);
 
-    if (t.GetValue() == "=")       relop = opEqual;
-    else if (t.GetValue() == "#")  relop = opNotEqual;
-    else SetError(t, "invalid relation.");
+		if (t.GetValue() == "=")       relop = opEqual;
+		else if (t.GetValue() == "#")  relop = opNotEqual;
+		else SetError(t, "invalid relation.");
 
-    return new CAstBinaryOp(t, relop, left, right);
-  } else {
-    return left;
-  }
+		return new CAstBinaryOp(t, relop, left, right);
+	} 
+	else {
+		return left;
+	}
 }
 
 CAstExpression* CParser::simpleexpr(CAstScope *s)
 {
   //
-  // simpleexpr ::= term { termOp term }.
+  // simpleexpr ::= ["+"|"-"] term { termOp term }.
   //
+	
   CAstExpression *n = NULL;
 
   n = term(s);
@@ -393,10 +395,42 @@ CAstExpression* CParser::factor(CAstScope *s)
   CAstExpression *unary = NULL, *n = NULL;
 
   switch (tt) {
+		case tIdent:
+		{
+		// qualident & subroutineCall
+			Consume(tIdent, &t);
+			tt=_scanner->Peek().GetType();
+
+			// subroutineCall
+			if(tt==tLParens){
+				// n = subroutineCall(s, n);
+			}
+			// qualident
+			else{
+				// "(" not in FOLLOW(qualident)
+				n = qualident(s, t);
+			}
+			break;
+		}
+
     // factor ::= number
     case tNumber:
       n = number();
       break;
+
+		// factor ::= boolean
+		case tBoolean:
+//			n = boolean();
+			break;
+
+		case tChar:
+//			n = character()
+			break;
+
+		case tString:
+			Consume(tString, &t);
+			n = new CAstStringConstant(t, t.GetValue(), s);
+			break;
 
     // factor ::= "(" expression ")"
     case tLParens:
@@ -404,6 +438,12 @@ CAstExpression* CParser::factor(CAstScope *s)
       n = expression(s);
       Consume(tRParens);
       break;
+
+		case tNot:
+			Consume(tNot);
+			n = factor(s);
+			break;
+
 
     default:
       cout << "got " << _scanner->Peek() << endl;
@@ -432,6 +472,25 @@ CAstConstant* CParser::number(void)
 
   return new CAstConstant(t, CTypeManager::Get()->GetInt(), v);
 }
+
+CAstConstant* CParser::boolean(void){
+	//
+	// 1 ::= true
+	// 0 ::= false
+	//
+	CToken t;
+	Consume(tBoolean, &t);
+	CAstConstant* constant=NULL;
+
+	if((t.GetValue()=="true")){
+		constant=new CAstConstant(t, CTypeManager::Get()->GetBool(), 1);
+	}
+	else{
+		constant=new CAstConstant(t, CTypeManager::Get()->GetBool(), 0);
+	}
+	return constant;
+}
+
 
 void CParser::varDeclaration(CAstScope* m){
 	//
