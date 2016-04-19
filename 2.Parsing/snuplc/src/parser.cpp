@@ -466,8 +466,8 @@ CAstExpression* CParser::factor(CAstScope *s)
 			break;
 
 		// factor ::= character
-		case tChar:
-//			n = character()
+		case tCharConst:
+			n = character();
 			break;
 
 		// factor ::= string 
@@ -541,9 +541,13 @@ CAstConstant* CParser::character(void){
 	// ascii code value
 	//
 	CToken t;
-	Consume(tChar, &t);
+	Consume(tCharConst, &t);
 	const char* c=t.GetValue().c_str();
-	return new CAstConstant(t, CTypeManager::Get()->GetChar(), c[0]);
+	CAstConstant* con= new CAstConstant(t, CTypeManager::Get()->GetChar(), c[0]);
+	if(con==NULL){
+		SetError(t, "can't create const char");
+	}
+	return con;
 }
 
 
