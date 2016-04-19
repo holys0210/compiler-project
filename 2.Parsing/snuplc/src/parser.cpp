@@ -942,6 +942,42 @@ CAstStatement* CParser::subroutineCall_stat(CAstScope* s, CToken a){
 }
 
 CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
+	//
+	// subroutineCall_expr = ident "(" [ expression { "," expression } ] ")"
+	//
+
+	Consume(tLParens);
+	EToken tt=_scanner->Peek().GetType();
+	
+	// create CAstFunctionCall
+	CSymtab* symtab=s->GetSymbolTable();
+	const CSymbol* sym=symtab->FindSymbol(name.GetValue());
+
+	if(sym==NULL){
+		SetError(name, "no procedure is matched");
+	}
+	const CSymProc* symproc=dynamic_cast<const CSymProc* >(sym);
+
+	CAstFunctionCall* func_call = new CAstFunctionCall(name, symproc);
+
+	// argument
+	if((tt==tPlusMinus)||(tt==tIdent)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
+		while(1){
+			CAstExpression* exp=expression(s);
+			func_call->AddArg(exp);
+			tt=_scanner->Peek().GetType();
+			if(tt!=tComma){
+				break;
+			}
+			Consume(tComma);
+		}
+	}
+	
+	Consume(tRParens);
+
+	return func_call;
+
+
 	/*
 	size_t child_num = s->GetNumChildren();
 	string a=name.GetValue();
