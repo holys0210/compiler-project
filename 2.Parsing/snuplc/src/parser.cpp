@@ -461,7 +461,7 @@ CAstExpression* CParser::factor(CAstScope *s)
       break;
 
 		// factor ::= boolean
-		case tBoolean:
+		case tBoolConst:
 			n = boolean();
 			break;
 
@@ -524,7 +524,7 @@ CAstConstant* CParser::boolean(void){
 	// 0 ::= false
 	//
 	CToken t;
-	Consume(tBoolean, &t);
+	Consume(tBoolConst, &t);
 	CAstConstant* constant=NULL;
 
 	if((t.GetValue()=="true")){
@@ -535,6 +535,17 @@ CAstConstant* CParser::boolean(void){
 	}
 	return constant;
 }
+
+CAstConstant* CParser::character(void){
+	//
+	// ascii code value
+	//
+	CToken t;
+	Consume(tChar, &t);
+	const char* c=t.GetValue().c_str();
+	return new CAstConstant(t, CTypeManager::Get()->GetChar(), c[0]);
+}
+
 
 
 void CParser::varDeclaration(CAstScope* m){
@@ -690,11 +701,6 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 	//proc->GetSymbol()->print(cout, 4);
 	//
 
-	// add subroutine name into symbol table of module
-	CSymtab *symtab= m->GetSymbolTable();
-	symtab->AddSymbol(sym_proc);
-
-
 
 	return proc;
 
@@ -730,10 +736,6 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 	// print for check
 	//proc->GetSymbol()->print(cout, 4);
 	//
-
-	// add subroutine name into symbol table of module
-	CSymtab *symtab= m->GetSymbolTable();
-	symtab->AddSymbol(sym_proc);
 
 	return proc;
 
@@ -918,6 +920,27 @@ CAstStatement* CParser::subroutineCall_stat(CAstScope* s, CToken a){
 }
 
 CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
+	/*
+	size_t child_num = s->GetNumChildren();
+	string a=name.GetValue();
+	CAstProcedure* child;
+	CSymProc* symproc=NULL;
+	for(size_t i=0; i<child_num; i++){
+		child = s->GetChild(i);
+		if(child->GetName()==a){
+			symproc=child->GetSymbol();
+			break;
+		}
+	}
 
+	if(symproc==NULL){
+		SetError(name, "No procedure is matched");
+	}
+
+	return new CAstFunctionCall(name, symproc);
+
+	}
+	*/
+	return NULL;
 }
 

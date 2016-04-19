@@ -108,6 +108,7 @@ class CParser {
 
     CAstConstant*     number(void);
 		CAstConstant*			boolean(void);
+		CAstConstant*			character(void);
 
 		void 							varDeclaration(CAstScope* m);
 		const CScalarType*			type(void);
