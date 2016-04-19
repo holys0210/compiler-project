@@ -705,6 +705,15 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 	//proc->GetSymbol()->print(cout, 4);
 	//
 
+	// add subroutin name into symbol table
+	CSymtab* symtab=m->GetSymbolTable();
+	bool flag=	symtab->AddSymbol(sym_proc);
+
+	if(!flag){
+		//already exist
+		SetError(name, "Another symbol with same name already exist");
+	}
+
 
 	return proc;
 
@@ -740,6 +749,15 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 	// print for check
 	//proc->GetSymbol()->print(cout, 4);
 	//
+
+	// add subroutin name into symbol table
+	CSymtab* symtab=m->GetSymbolTable();
+	bool flag=	symtab->AddSymbol(sym_proc);
+
+	if(!flag){
+		//already exist
+		SetError(name, "Another symbol with same name already exist");
+	}
 
 	return proc;
 
