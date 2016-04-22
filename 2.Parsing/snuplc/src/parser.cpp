@@ -597,7 +597,7 @@ void CParser::varDeclaration(CAstScope* m){
 		}
 
 		// type
-		const CScalarType* var_type=type();
+		const CType* var_type=type();
 
 		//add symbol to symtab
 		for(int i=0; i<index; i++){
@@ -614,30 +614,50 @@ void CParser::varDeclaration(CAstScope* m){
 
 }
 
-const CScalarType* CParser::type(){
-		CToken dummy;
+const CType* CParser::type(){
+		CToken dim;
 		EToken tt=_scanner->Peek().GetType();
+		const CType* ct;
+		CTypeManager* tm=CTypeManager::Get();
 		switch(tt){
 			case tInteger:
-				Consume(tt, &dummy);
-				return CTypeManager::Get()->GetInt();
+				Consume(tt);
+				ct = tm->GetInt();
 				break;
 			case tBoolean:
-				Consume(tt, &dummy);
-				return CTypeManager::Get()->GetBool();
+				Consume(tt);
+				ct = tm->GetBool();
 				break;
 			case tChar:
-				Consume(tt, &dummy);
-				return CTypeManager::Get()->GetChar();
+				Consume(tt);
+				ct = tm->GetChar();
 				break;
 
 			default:
+			//TODO
 				//error (temporary handling error)
-				//TODO
-				Consume(tInteger, &dummy);
+				Consume(tInteger, &dim);
+				SetError(dim, "invalid token for type");
 		}
 		//TODO
 		// array
+		vector<int> dim_stack;
+		while(_scanner->Peek().GetType()==tLBrak){
+			Consume(tLBrak);
+			Consume(tNumber, &dim);
+			Consume(tRBrak);
+
+			dim_stack.push_back(stoi(dim.GetValue()));
+
+		}
+
+		for(vector<int>::reverse_iterator it=dim_stack.rbegin(); it != dim_stack.rend(); ++it){
+			ct = tm->GetArray(*it, ct);
+		}
+
+		return ct;
+
+
 }
 
 void CParser::subroutineDecl(CAstModule* m){
@@ -739,7 +759,7 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 
 	Consume(tColon, &dummy);
 
-	const CScalarType* var_type=type();
+	const CType* var_type=type();
 
 	Consume(tSemicolon, &dummy);
 
@@ -818,7 +838,7 @@ void CParser::varDecl(CAstProcedure* proc){
 		Consume(tComma, &dummy);
 	}
 	
-	const CScalarType* var_type=type();
+	const CType* var_type=type();
 	CSymtab* symtab = proc->GetSymbolTable();
 	CSymProc* symproc = proc->GetSymbol();
 
@@ -1081,6 +1101,7 @@ CAstStatement* CParser::returnStatment(CAstScope* s){
 	}
 
 	// type check
+	// not implemented in reference
 
 	return new CAstStatReturn(return_token, s, expr);
 }

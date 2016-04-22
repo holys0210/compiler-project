@@ -111,7 +111,7 @@ class CParser {
 		CAstConstant*			character(void);
 
 		void 							varDeclaration(CAstScope* m);
-		const CScalarType*			type(void);
+		const CType*			type(void);
 		void 							subroutineDecl(CAstModule* m);
 		CAstProcedure*		procedureDecl(CAstModule* m);
 		CAstProcedure*		functionDecl(CAstModule* m);
