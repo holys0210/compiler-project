@@ -486,7 +486,7 @@ CAstExpression* CParser::factor(CAstScope *s)
 		// factor ::= "!" factor
 		case tNot:
 			Consume(tNot, &t);
-			n = new CAstUnaryOp(t, opNop, factor(s));
+			n = new CAstUnaryOp(t, opNot, factor(s));
 			break;
 
 
