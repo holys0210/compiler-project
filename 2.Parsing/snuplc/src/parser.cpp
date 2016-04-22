@@ -206,15 +206,15 @@ CAstStatement* CParser::statSequence(CAstScope *s)
 				break;
 
 			case tIf:
-				//ifStatement(s);
+				st = ifStatement(s);
 				break;
 
 			case tWhile:
-				//whileStatement(s);
+				st = whileStatement(s);
 				break;
 
 			case tReturn:
-				//returnStatment(s);
+				st = returnStatment(s);
 				break;
 
 			default:
@@ -307,6 +307,7 @@ CAstExpression* CParser::expression(CAstScope* s)
 {
   //
   // expression ::= simpleexpr [ relOp simpleexpression ].
+	// FIRST(expression) = { "+", "-", ident, number, boolean, char, string, "(", "procedure, "fuction", "!"
   //
   CToken t;
   EOperation relop;
@@ -1001,4 +1002,90 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 	*/
 	return NULL;
 }
+
+CAstStatement* CParser::ifStatement(CAstScope* s){
+	//
+	// ifStatement = "if" "(" expression ")" "then" statSequence
+	// 								[ "else" statSequence ] "end"
+	//
+	CToken if_token;
+	
+	// if
+	Consume(tIf, &if_token);
+
+	// condition
+	Consume(tLParens);
+
+	CAstExpression* cond=expression(s);
+
+	Consume(tRParens);
+	
+	// then
+	Consume(tThen);
+
+	CAstStatement* ifBody = statSequence(s);
+	CAstStatement* elseBody = NULL;
+
+	if(_scanner->Peek().GetType()==tElse){
+		//else
+		Consume(tElse);
+		elseBody = statSequence(s);
+	}
+
+	Consume(tEnd);
+
+	return new CAstStatIf(if_token, cond, ifBody, elseBody);
+}
+
+CAstStatement* CParser::whileStatement(CAstScope* s){
+	//
+	// whileStatement = "while" "(" expression ")" "do" statSequence "end"
+	//
+
+	CToken while_token;
+
+	Consume(tWhile, &while_token);
+
+	Consume(tLParens);
+
+	CAstExpression* cond = expression(s);
+
+	Consume(tRParens);
+
+	Consume(tDo);
+
+	CAstStatement* body = statSequence(s);
+
+	Consume(tEnd);
+
+	return new CAstStatWhile(while_token, cond, body);
+}
+
+CAstStatement* CParser::returnStatment(CAstScope* s){
+	//
+	// returnStatment = "return" [ expression ]
+	// FOLLOW(returnStatment) = {"end"}
+	//
+
+
+	CToken return_token;
+
+	Consume(tReturn, &return_token);
+
+	EToken tt=_scanner->Peek().GetType();
+
+	CAstExpression* expr=NULL;
+
+	if((tt==tPlusMinus)||(tt==tIdent)||(tt==tNumber)||(tt==tBoolConst)||(tt==tChar)||(tt==tString)||(tt==tLParens)||(tt==tProcedure)||(tt==tFunction)||(tt==tNot)){
+		expr=expression(s);
+	}
+
+	// type check
+
+	return new CAstStatReturn(return_token, s, expr);
+}
+
+
+
+
 

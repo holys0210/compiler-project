@@ -126,6 +126,10 @@ class CParser {
 		CAstDesignator*		qualident(CAstScope* s, CToken name);
 		CAstFunctionCall*	subroutineCall_expr(CAstScope* s, CToken name);
 
+		CAstStatement*		ifStatement(CAstScope* s);
+		CAstStatement*		whileStatement(CAstScope* s);
+		CAstStatement*		returnStatment(CAstScope* s);
+
     /// @}
 
 
