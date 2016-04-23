@@ -118,7 +118,7 @@ class CParser {
 		void 							formalParam(CAstProcedure* proc);
 		void 							varDeclSequence(CAstProcedure* proc);
 		void 							varDecl(CAstProcedure* proc);
-		void							subroutineBody(CAstProcedure* proc);
+		CAstStatement*			subroutineBody(CAstProcedure* proc);
 
 		CAstStatement*				assignment_or_subroutineCall(CAstScope* s);
 		CAstStatement*		subroutineCall_stat(CAstScope* s, CToken a);

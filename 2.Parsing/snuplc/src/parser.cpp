@@ -343,14 +343,15 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 	if(sym->GetDataType()->IsArray()){
 		//array
 		CAstArrayDesignator* design=new CAstArrayDesignator(name, sym);
-		do{
+		tt=_scanner->Peek().GetType();
+		while(tt==tLBrak){
 			Consume(tLBrak);
 			CAstExpression* expr=expression(s);
 			Consume(tRBrak);
 			design->AddIndex(expr);
 
 			tt=_scanner->Peek().GetType();
-		}while(tt==tLBrak);
+		}
 		return design;
 
 	}
@@ -750,7 +751,8 @@ void CParser::subroutineDecl(CAstModule* m){
 			Consume(tBegin, &dummy);
 	}
 
-	subroutineBody(proc);
+	CAstStatement* statseq=subroutineBody(proc);
+	proc->SetStatementSequence(statseq);
 
 	//ident
 	CToken end_proc_name;
@@ -921,7 +923,7 @@ void CParser::varDecl(CAstProcedure* proc){
 
 }
 
-void CParser::subroutineBody(CAstProcedure* proc){
+CAstStatement* CParser::subroutineBody(CAstProcedure* proc){
 	//
 	// subroutineBody = varDeclaration "begin" statSequence "end"
 	//
@@ -931,9 +933,11 @@ void CParser::subroutineBody(CAstProcedure* proc){
 
 	Consume(tBegin, &dummy);
 
-	statSequence(proc);
+	CAstStatement* statseq=statSequence(proc);
 
 	Consume(tEnd, &dummy);
+
+	return statseq;
 
 }
 /*
