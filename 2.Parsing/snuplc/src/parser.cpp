@@ -642,12 +642,19 @@ const CType* CParser::type(){
 		//TODO
 		// array
 		vector<int> dim_stack;
+		int d;
 		while(_scanner->Peek().GetType()==tLBrak){
 			Consume(tLBrak);
-			Consume(tNumber, &dim);
+			if(_scanner->Peek().GetType()==tNumber){
+				Consume(tNumber, &dim);
+				d=stoi(dim.GetValue());
+			}
+			else{
+				d=-1;
+			}
 			Consume(tRBrak);
 
-			dim_stack.push_back(stoi(dim.GetValue()));
+			dim_stack.push_back(d);
 
 		}
 
@@ -823,28 +830,29 @@ void CParser::varDecl(CAstProcedure* proc){
 	// varDecl = ident { "," ident } ":" type
 	//
 
-	CToken id[16], dummy;
+	CToken id_token;
+	vector<CToken> id;
 	EToken  tt;
 
-	int index=0;
-
 	while(1){
-		Consume(tIdent, &id[index++]);
+		Consume(tIdent, &id_token);
+		id.push_back(id_token);
 
 		if(_scanner->Peek().GetType() == tColon){
-			Consume(tColon, &dummy);
+			Consume(tColon);
 			break;
 		}
-		Consume(tComma, &dummy);
+		Consume(tComma);
 	}
 	
 	const CType* var_type=type();
 	CSymtab* symtab = proc->GetSymbolTable();
 	CSymProc* symproc = proc->GetSymbol();
 
-	for(int i=0; i<index; i++){
-		symtab->AddSymbol(proc->CreateVar(id[i].GetValue(), var_type));
-		symproc->AddParam(new CSymParam(i, id[i].GetValue(), var_type));
+	int i=0;
+	for(vector<CToken>::iterator it=id.begin(); it != id.end(); ++it){
+		symtab->AddSymbol(proc->CreateVar(it->GetValue(), var_type));
+		symproc->AddParam(new CSymParam(i++, it->GetValue(), var_type));
 	}
 
 }
