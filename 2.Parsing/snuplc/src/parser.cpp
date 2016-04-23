@@ -117,6 +117,63 @@ void CParser::InitSymbolTable(CSymtab *s)
   CTypeManager *tm = CTypeManager::Get();
 
   // TODO: add predefined functions here
+	CSymProc* sym_proc;
+	CSymParam* param;
+
+	//
+	// DIM(array: ptr to array, dim:integer) : integer
+	//
+	sym_proc= new CSymProc("DIM", tm->GetInt());
+	param = new CSymParam(0, "array", tm->GetPointer(tm->GetNull()));
+	sym_proc->AddParam(param);
+	param = new CSymParam(1, "dim", tm->GetInt());
+	sym_proc->AddParam(param);
+	s->AddSymbol(sym_proc);
+
+	//
+	//  DOFS(array: ptr to array) : integer
+	//
+	sym_proc= new CSymProc("DOFS", tm->GetInt());
+	param = new CSymParam(0, "array", tm->GetPointer(tm->GetNull()));
+	sym_proc->AddParam(param);
+	s->AddSymbol(sym_proc);
+
+	//
+	// ReadInt() : integer
+	//
+	sym_proc= new CSymProc("ReadInt", tm->GetInt());
+	s->AddSymbol(sym_proc);
+
+	// 
+	// WriteInt(i: integer):
+	//
+	sym_proc= new CSymProc("WriteInt", tm->GetNull());
+	param = new CSymParam(0, "i", tm->GetInt());
+	sym_proc->AddParam(param);
+	s->AddSymbol(sym_proc);
+
+	//
+	// WriteChar(c: char):
+	//
+	sym_proc= new CSymProc("WriteChar", tm->GetNull());
+	param = new CSymParam(0, "c", tm->GetChar());
+	sym_proc->AddParam(param);
+	s->AddSymbol(sym_proc);
+
+	//
+	// WriteStr(string: char[])
+	//
+	sym_proc= new CSymProc("WriteStr", tm->GetNull());
+	param = new CSymParam(0, "string", tm->GetPointer(tm->GetArray(-1, tm->GetChar())));
+	sym_proc->AddParam(param);
+	s->AddSymbol(sym_proc);
+
+	//
+	// WriteLn()
+	//
+	sym_proc= new CSymProc("WriteLn", tm->GetNull());
+	s->AddSymbol(sym_proc);
+
 }
 
 CAstModule* CParser::module(void)
@@ -137,6 +194,7 @@ CAstModule* CParser::module(void)
 	Consume(tSemicolon, &dummy);
 	
   CAstModule *m = new CAstModule(dummy, module_name.GetValue());
+	InitSymbolTable(m->GetSymbolTable());
 	// varDeclaration
 	varDeclaration(m);
 
@@ -293,7 +351,6 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 
 			tt=_scanner->Peek().GetType();
 		}while(tt==tLBrak);
-		design->print(cout, 4);
 		return design;
 
 	}
