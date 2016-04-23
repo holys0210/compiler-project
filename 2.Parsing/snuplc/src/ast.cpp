@@ -1193,7 +1193,22 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstArrayDesignator::GetType(void) const
 {
-  return _symbol->GetDataType();
+	const CType* type=_symbol->GetDataType();
+	const CArrayType* arr_type;
+
+	if(type->IsPointer()){
+		const CPointerType* ptr_type=dynamic_cast<const CPointerType*>(type);
+		type=ptr_type->GetBaseType();
+	}
+
+	for(int i=1; i<=GetNIndices(); i++){
+		if(type->IsArray()){
+			arr_type=dynamic_cast<const CArrayType*>(type);
+			type=arr_type->GetInnerType();
+		}
+	}
+
+  return type;
 }
 
 ostream& CAstArrayDesignator::print(ostream &out, int indent) const
