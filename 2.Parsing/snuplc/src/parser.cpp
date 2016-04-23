@@ -222,6 +222,7 @@ CAstStatement* CParser::statSequence(CAstScope *s)
 				break;
 		}
 
+
 		assert(st != NULL);
 		if (head == NULL) head = st;
 		else tail->SetNext(st);
@@ -846,6 +847,10 @@ void CParser::varDecl(CAstProcedure* proc){
 	}
 	
 	const CType* var_type=type();
+	//array
+	if(var_type->IsArray()){
+		var_type=CTypeManager::Get()->GetPointer(var_type);
+	}
 	CSymtab* symtab = proc->GetSymbolTable();
 	CSymProc* symproc = proc->GetSymbol();
 
@@ -956,7 +961,7 @@ CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
 			break;
 
 		case tLParens:
-			//subroutineCall(s, name);
+			st = subroutineCall_stat(s, name);
 			break;
 
 	}
@@ -966,7 +971,10 @@ CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
 }
 		
 CAstStatement* CParser::subroutineCall_stat(CAstScope* s, CToken a){
-	return NULL;
+	CAstFunctionCall* func_call=subroutineCall_expr(s, a);
+
+	return new CAstStatCall(a, func_call);
+
 
 }
 
@@ -990,7 +998,7 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 	CAstFunctionCall* func_call = new CAstFunctionCall(name, symproc);
 
 	// argument
-	if((tt==tPlusMinus)||(tt==tIdent)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
+	if((tt==tPlusMinus)||(tt==tIdent)||(tt=tNumber)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
 		while(1){
 			CAstExpression* exp=expression(s);
 			func_call->AddArg(exp);
