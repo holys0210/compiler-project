@@ -282,12 +282,8 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 		SetError(name, "No identifier in symbol table");
 	}
 
-
-	if(!(tt == tLBrak)){
-		// non-array
-		return new CAstDesignator(name, sym);
-	}
-	else{
+	if(sym->GetDataType()->IsArray()){
+		//array
 		CAstArrayDesignator* design=new CAstArrayDesignator(name, sym);
 		do{
 			Consume(tLBrak);
@@ -297,7 +293,13 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 
 			tt=_scanner->Peek().GetType();
 		}while(tt==tLBrak);
+		design->print(cout, 4);
 		return design;
+
+	}
+	else{
+		// non-array
+		return new CAstDesignator(name, sym);
 	}
 
 }
