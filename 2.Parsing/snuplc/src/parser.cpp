@@ -340,8 +340,11 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 		SetError(name, "No identifier in symbol table");
 	}
 
-	if(sym->GetDataType()->IsArray()){
+	const CType* ctype=sym->GetDataType();
+
+	if((ctype->IsArray())||(ctype->IsPointer())){
 		//array
+			
 		CAstArrayDesignator* design=new CAstArrayDesignator(name, sym);
 		tt=_scanner->Peek().GetType();
 		while(tt==tLBrak){
