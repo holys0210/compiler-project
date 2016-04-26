@@ -409,12 +409,31 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 	EToken tt = _scanner->Peek().GetType();
 	
   CAstExpression *n= NULL;
+	CAstConstant* con=NULL;
 
 	if(tt==tPlusMinus){
 		CToken sign;
 		Consume(tPlusMinus, &sign);
 		CAstExpression* m =term(s);
-		n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
+
+		con=dynamic_cast<CAstConstant*>(m);
+		if(con==NULL){
+			n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
+		}
+		else{
+			if(con->GetType()==CTypeManager::Get()->GetInt()){
+				long long v = con->GetValue();
+				con->SetValue(-v);
+				n = con;
+			}
+			else{
+				n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
+			}
+		}
+
+
+
+
 	}
 	else{
 		n = term(s);
