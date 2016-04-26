@@ -116,8 +116,8 @@ class CParser {
 		CAstProcedure*		procedureDecl(CAstModule* m);
 		CAstProcedure*		functionDecl(CAstModule* m);
 		void 							formalParam(CAstProcedure* proc);
-		void 							varDeclSequence(CAstProcedure* proc);
-		void 							varDecl(CAstProcedure* proc);
+		void 							varDeclSequence(CAstProcedure* proc, bool is_para);
+		void 							varDecl(CAstProcedure* proc, bool is_para);
 		CAstStatement*			subroutineBody(CAstProcedure* proc);
 
 		CAstStatement*				assignment_or_subroutineCall(CAstScope* s);

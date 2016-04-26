@@ -668,6 +668,8 @@ void CParser::varDeclaration(CAstScope* m){
 			mod_symtab->AddSymbol(m->CreateVar(id[i].GetValue(), var_type));
 		}
 		/////////
+		
+
 
 		Consume(tSemicolon, &dummy);
 		tt=_scanner->Peek().GetType();
@@ -868,29 +870,29 @@ void CParser::formalParam(CAstProcedure* proc){
 	EToken tt=_scanner->Peek().GetType();
 	// FIRST(varDeclSequence) = { ident}
 	if(tt==tIdent){
-		varDeclSequence(proc);
+		varDeclSequence(proc, true);
 	}
 
 	Consume(tRParens, &dummy);
 }
 
 
-void CParser::varDeclSequence(CAstProcedure* proc){
+void CParser::varDeclSequence(CAstProcedure* proc, bool is_para){
 	//
 	// varDeclSequence = varDecl { ";" vrDecl }
 	//
 
 	CToken dummy;
-	varDecl(proc);
+	varDecl(proc, is_para);
 
 	while(_scanner->Peek().GetType() == tSemicolon){
 		Consume(tSemicolon, &dummy);
-		varDecl(proc);
+		varDecl(proc, is_para);
 	}
 
 }
 
-void CParser::varDecl(CAstProcedure* proc){
+void CParser::varDecl(CAstProcedure* proc, bool is_para){
 	//
 	// varDecl = ident { "," ident } ":" type
 	//
@@ -917,10 +919,18 @@ void CParser::varDecl(CAstProcedure* proc){
 	}
 	CSymtab* symtab = proc->GetSymbolTable();
 	CSymProc* symproc = proc->GetSymbol();
+	CSymbol* sym=NULL;
 
 	int i=0;
 	for(vector<CToken>::iterator it=id.begin(); it != id.end(); ++it){
-		symtab->AddSymbol(proc->CreateVar(it->GetValue(), var_type));
+		if(is_para){
+			sym=new CSymParam(i, it->GetValue(), var_type);
+		}
+		else{
+			sym=proc->CreateVar(it->GetValue(), var_type);
+		}
+
+		symtab->AddSymbol(sym);
 		symproc->AddParam(new CSymParam(i++, it->GetValue(), var_type));
 	}
 
@@ -1187,8 +1197,6 @@ CAstStatement* CParser::returnStatment(CAstScope* s){
 
 	return new CAstStatReturn(return_token, s, expr);
 }
-
-
 
 
 
