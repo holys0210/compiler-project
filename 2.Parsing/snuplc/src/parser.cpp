@@ -1096,6 +1096,11 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 	if((tt==tPlusMinus)||(tt==tIdent)||(tt=tNumber)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
 		while(1){
 			CAstExpression* exp=expression(s);
+
+			CAstArrayDesignator* arr_dsg=dynamic_cast<CAstArrayDesignator*>(exp);
+			if(arr_dsg!=NULL){
+				exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
+			}
 			func_call->AddArg(exp);
 			tt=_scanner->Peek().GetType();
 			if(tt!=tComma){
