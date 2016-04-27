@@ -1093,13 +1093,29 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 	CAstFunctionCall* func_call = new CAstFunctionCall(name, symproc);
 
 	// argument
-	if((tt==tPlusMinus)||(tt==tIdent)||(tt=tNumber)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
+	if((tt==tPlusMinus)||(tt==tIdent)||(tt==tNumber)||(tt==tBoolConst)||(tt==tCharConst)||(tt==tString)||(tt==tLParens)||(tt==tNot)){
+		int index=0;
 		while(1){
 			CAstExpression* exp=expression(s);
 
 			CAstArrayDesignator* arr_dsg=dynamic_cast<CAstArrayDesignator*>(exp);
 			if(arr_dsg!=NULL){
-				exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
+				const CSymParam *param=symproc->GetParam(index);
+				const CType* ct=param->GetDataType();
+				int N = arr_dsg->GetNIndices();
+				if((ct->IsPointer())&&!(arr_dsg->GetType()->IsPointer())){
+					ct=(dynamic_cast<const CPointerType*>(ct))->GetBaseType();
+				}
+
+				for(int i=0; i<N; i++){
+					if(!(ct->IsArray())){
+						break;
+					}
+					ct=(dynamic_cast<const CArrayType*>(ct))->GetInnerType();
+				}
+				if(ct->IsArray()){
+					exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
+				}
 			}
 			func_call->AddArg(exp);
 			tt=_scanner->Peek().GetType();
@@ -1107,6 +1123,7 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 				break;
 			}
 			Consume(tComma);
+			index++;
 		}
 	}
 	

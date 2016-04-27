@@ -1196,7 +1196,7 @@ const CType* CAstArrayDesignator::GetType(void) const
 	const CType* type=_symbol->GetDataType();
 	const CArrayType* arr_type;
 
-	if(type->IsPointer()){
+	if((type->IsPointer())&&(GetNIndices()>1)){
 		const CPointerType* ptr_type=dynamic_cast<const CPointerType*>(type);
 		type=ptr_type->GetBaseType();
 	}
