@@ -95,39 +95,132 @@ class CParser {
     /// @name methods for recursive-descent parsing
     /// @{
 
+
+		/// @brief module = "module" ident ";" varDeclation { subroutineDecl } "begin" statSequence "end" ident "."
+		/// @retval CAstModule module node
     CAstModule*       module(void);
 
+		/// @brief statSequence = [ statement { "," statement } ]
+		/// @param s current scope
+		/// @retval CAstStatement statement sequence
     CAstStatement*    statSequence(CAstScope *s);
 
+		/// @brief assignment = qualident ":=" expression
+		/// @param s current scope
+		/// @param name token name (lhs)
+		/// @retval CAstStatAssign assignment statement node
     CAstStatAssign*   assignment(CAstScope *s, CToken name);
 
+		/// @brief expression = simpleexpr [ relOp simpleexpr ]
+		/// @param s current scope
+		/// @retval CAstExpression expression node
     CAstExpression*   expression(CAstScope *s);
+		
+		/// @brief simpleexpr = ["+"|"-"] term { termOp term }
+		/// @param s current scope
+		/// @retval CAstExpression expression node
     CAstExpression*   simpleexpr(CAstScope *s);
+
+		/// @brief term = factor { factOp factor }
+		/// @param s current scope
+		/// @retval CAstExpression expression node
     CAstExpression*   term(CAstScope *s);
+
+		/// @brief factor = qualident | number | boolean | char | string | "(" expression ")" | subroutineCall | "!" factor
+		/// @param s current scope
+		/// @retval CAstExpression expression node
     CAstExpression*   factor(CAstScope *s);
 
+		/// @brief number = digit { digit }
+		/// @retval CAstConstant positive long long number node
     CAstConstant*     number(void);
+
+		/// @brief boolean = "true" | "false"
+		/// @retval CAstConstant containing 1 if true
+		/// @retval CAstConstant containing 0 if false
 		CAstConstant*			boolean(void);
+
+		/// @brief character
+		/// @retval CAstConstant containing ASCII code value corresponding character
 		CAstConstant*			character(void);
 
+		/// @brief varDeclation = [ "var" varDeclSequence ";" ]
+		/// @param CAstScope current scope
 		void 							varDeclaration(CAstScope* m);
+
+		/// @brief type = basetype | type "[" [ number ] "]"
+		/// @retval CType
 		const CType*			type(void);
+
+		/// @brief subroutineDecl = ( procedureDecl | functionDecl ) subroutineBody ident ";"
+		/// @param CAstModule current module
 		void 							subroutineDecl(CAstModule* m);
+
+		/// @brief procedureDecl = "procedure" ident [ formalParam ] ";"
+		/// @param CAstModule current module
+		/// @retval CAstProcedure procedure node
 		CAstProcedure*		procedureDecl(CAstModule* m);
+
+		/// @brief functionDecl = "function" ident [ formalParam ] ":" type ";"
+		/// @param CAstModule current module
+		/// @retval CAstProcedure function node
 		CAstProcedure*		functionDecl(CAstModule* m);
+
+		/// @brief formalParam = "(" [ varDeclSequence ] ")"
+		/// @param CAstProcedure current subroutine
 		void 							formalParam(CAstProcedure* proc);
+
+		/// @brief varDeclSequence = varDecl { ";" varDecl }
+		/// @param proc current subroutine
+		/// @param is_para true if parameter false otherwise
 		void 							varDeclSequence(CAstProcedure* proc, bool is_para);
+
+		/// @brief varDecl = ident { "," ident } ":" type
+		/// @param proc current subroutine
+		/// @param is_para true if parameter false otherwise
 		void 							varDecl(CAstProcedure* proc, bool is_para);
+
+		/// @brief subroutineBody = varDeclaration "begin" statSequence "end"
+		/// @param proc current subroutine
+		/// @retval CAstStatement subroutine statement node
 		CAstStatement*			subroutineBody(CAstProcedure* proc);
 
+		/// @brief assignment_or_subroutineCall = assignment | subroutineCall
+		/// @param s current scope
+		/// @retval CAstStatement assignment or subroutineCall statement node
 		CAstStatement*				assignment_or_subroutineCall(CAstScope* s);
-		CAstStatement*		subroutineCall_stat(CAstScope* s, CToken a);
 
+		/// @brief subroutineCall_stat : statement node by calling subroutineCall_expr
+		/// @param s current scope
+		/// @param name subroutine name
+		/// @retval CAstStatement subroutineCall statment node
+		CAstStatement*		subroutineCall_stat(CAstScope* s, CToken name);
+
+		/// @brief qualident = ident { "[" expression "]" }
+		/// @param s current scope
+		/// @param name lhs
+		/// @retval CAstDesignator designator node
 		CAstDesignator*		qualident(CAstScope* s, CToken name);
+
+		/// @brief subroutineCall_expr = ident "(" [ expression { "," expression } ] ")"
+		/// @param s current scope
+		/// @param name subroutine name
+		/// @retval CAstFunctionCall subroutineCall expression node
 		CAstFunctionCall*	subroutineCall_expr(CAstScope* s, CToken name);
 
+		/// @brief ifStatement = "if" "(" expression ")" "then" statSequence [ "else" statSequence ] "end"
+		/// @param s current scope
+		/// @retval CAstStatement ifstatement node
 		CAstStatement*		ifStatement(CAstScope* s);
+
+		/// @brief whileStatement = "while" "(" expression ")" "do" statSequence "end"
+		/// @param s current scope
+		/// @retval CAstStatement whilestatment node
 		CAstStatement*		whileStatement(CAstScope* s);
+
+		/// @brief returnStatment = "return" [ expression ]
+		/// @param s current scope
+		/// @return CAstStatement returnstatement node
 		CAstStatement*		returnStatment(CAstScope* s);
 
     /// @}
