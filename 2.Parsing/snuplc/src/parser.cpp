@@ -294,22 +294,6 @@ CAstStatement* CParser::statSequence(CAstScope *s)
 
   return head;
 }
-/*
-CAstStatAssign* CParser::assignment(CAstScope *s)
-{
-  //
-  // assignment ::= number ":=" expression.
-  //
-  CToken t;
-
-  CAstConstant *lhs = number();
-  Consume(tAssign, &t);
-
-  CAstExpression *rhs = expression(s);
-
-  return new CAstStatAssign(t, lhs, rhs);
-}
-*/
 
 CAstStatAssign* CParser::assignment(CAstScope *s, CToken name)
 {
@@ -418,21 +402,21 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 
 		con=dynamic_cast<CAstConstant*>(m);
 		if(con==NULL){
+			// not const
 			n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
 		}
 		else{
 			if(con->GetType()==CTypeManager::Get()->GetInt()){
+				// number -> change sign
 				long long v = con->GetValue();
 				con->SetValue(-v);
 				n = con;
 			}
 			else{
+				// not number
 				n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
 			}
 		}
-
-
-
 
 	}
 	else{
@@ -655,7 +639,7 @@ void CParser::varDeclaration(CAstScope* m){
 	Consume(tVarDecl, &dummy);
 
 	// typedef for varDecl
-	CToken id[16];
+	vector<CToken> id;
 	int index;
 
 	CSymtab* mod_symtab=m->GetSymbolTable();
@@ -668,7 +652,8 @@ void CParser::varDeclaration(CAstScope* m){
 		index=0;
 		//ident
 		while(1){
-			Consume(tIdent, &id[index++]);
+			Consume(tIdent, &dummy);
+			id.push_back(dummy);
 
 			if(_scanner->Peek().GetType() == tColon){
 				// ":"
@@ -683,8 +668,8 @@ void CParser::varDeclaration(CAstScope* m){
 		const CType* var_type=type();
 
 		//add symbol to symtab
-		for(int i=0; i<index; i++){
-			mod_symtab->AddSymbol(m->CreateVar(id[i].GetValue(), var_type));
+		for(vector<CToken>::iterator it=id.begin(); it != id.end(); ++it){
+			mod_symtab->AddSymbol(m->CreateVar(it->GetValue(), var_type));
 		}
 		/////////
 		
@@ -719,12 +704,10 @@ const CType* CParser::type(){
 				break;
 
 			default:
-			//TODO
 				//error (temporary handling error)
 				Consume(tInteger, &dim);
 				SetError(dim, "invalid token for type");
 		}
-		//TODO
 		// array
 		vector<int> dim_stack;
 		int d;
@@ -753,6 +736,9 @@ const CType* CParser::type(){
 }
 
 void CParser::subroutineDecl(CAstModule* m){
+	//
+	// subroutineDecl = ( procedureDecl | functionDecl ) subroutineBody ident ";"
+	//
 	EToken tt=_scanner->Peek().GetType();
 	CToken dummy;
 	CAstProcedure* proc;
@@ -972,71 +958,6 @@ CAstStatement* CParser::subroutineBody(CAstProcedure* proc){
 	return statseq;
 
 }
-/*
-CAstStatement* CParser::statSequence(CAstScope* s){
-	//
-	// statSequence = [ statement { ";" statement } ]
-	// FIRST(statSequence) = { ident, "if", "while", "return" }
-	// FOLLOW(statSequence) = { "end", "else" }
-	//
-	CAstStatement* head = NULL;
-
-	EToken tt = _scanner->Peek().GetType();
-	bool escape=false;
-
-	if( !((tt == tEnd)||(tt == tElse))){
-		CAstStatement* tail=NULL;
-
-		do {
-			CToken t;
-			tt =_scanner->Peek().GetType();
-			CAstStatement* st=NULL;
-
-			switch(tt){
-				case tIdent:
-					st = assignemt_or_subroutinCall(s);
-					break;
-
-				case tIf:
-					//ifStatement(s);
-					break;
-
-				case tWhile:
-					//whileStatement(s);
-					break;
-
-				case tReturn:
-					//returnStatment(s);
-					break;
-
-				default:
-					SetError(_scanner->Peek(), "statement expected.");
-					break;
-			}
-
-			assert(st != NULL);
-			if ( head ==NULL){
-				head =st;
-			}
-			else{
-				tail->SetNext(st);
-				tail=st;
-			}
-
-			tt= _scanner->Peek().GetType();
-			
-			if(tt == tEnd){
-				break;
-			}
-
-			Consume(tSemicolon);
-		}while(!_abort);
-	}
-
-
-	return head;
-}
-*/
 CAstStatement* CParser::assignment_or_subroutineCall(CAstScope* s){
 	//
 	// assignment_or_subroutinCall = ident ...
@@ -1131,28 +1052,6 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 
 	return func_call;
 
-
-	/*
-	size_t child_num = s->GetNumChildren();
-	string a=name.GetValue();
-	CAstProcedure* child;
-	CSymProc* symproc=NULL;
-	for(size_t i=0; i<child_num; i++){
-		child = s->GetChild(i);
-		if(child->GetName()==a){
-			symproc=child->GetSymbol();
-			break;
-		}
-	}
-
-	if(symproc==NULL){
-		SetError(name, "No procedure is matched");
-	}
-
-	return new CAstFunctionCall(name, symproc);
-
-	}
-	*/
 	return NULL;
 }
 
