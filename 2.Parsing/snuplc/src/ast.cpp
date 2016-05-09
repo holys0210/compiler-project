@@ -359,14 +359,14 @@ CTacAddr* CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next)
 // CAstStatAssign
 //
 CAstStatAssign::CAstStatAssign(CToken t,
-                               CAstConstant *lhs, CAstExpression *rhs)
+                               CAstDesignator *lhs, CAstExpression *rhs)
   : CAstStatement(t), _lhs(lhs), _rhs(rhs)
 {
   assert(lhs != NULL);
   assert(rhs != NULL);
 }
 
-CAstConstant* CAstStatAssign::GetLHS(void) const
+CAstDesignator* CAstStatAssign::GetLHS(void) const
 {
   return _lhs;
 }
@@ -1193,7 +1193,22 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstArrayDesignator::GetType(void) const
 {
-  return NULL;
+	const CType* type=_symbol->GetDataType();
+	const CArrayType* arr_type;
+
+	if((type->IsPointer())&&(GetNIndices()>1)){
+		const CPointerType* ptr_type=dynamic_cast<const CPointerType*>(type);
+		type=ptr_type->GetBaseType();
+	}
+
+	for(int i=1; i<=GetNIndices(); i++){
+		if(type->IsArray()){
+			arr_type=dynamic_cast<const CArrayType*>(type);
+			type=arr_type->GetInnerType();
+		}
+	}
+
+  return type;
 }
 
 ostream& CAstArrayDesignator::print(ostream &out, int indent) const
@@ -1359,7 +1374,7 @@ bool CAstStringConstant::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstStringConstant::GetType(void) const
 {
-  return NULL;
+  return _type;
 }
 
 ostream& CAstStringConstant::print(ostream &out, int indent) const
