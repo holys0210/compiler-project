@@ -167,6 +167,21 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const
 {
   bool result = true;
 
+	try {
+		CAstStatement *s = _statseq;
+		while (result && (s != NULL)) {
+			result = s->TypeCheck(t, msg);
+			s = s->GetNext();
+		}
+		vector<CAstScope*>::const_iterator it = _children.begin();
+		while (result && (it != _children.end())) {
+			result = (*it)->TypeCheck(t, msg);
+			it++;
+		}
+	} catch (...) {
+		result = false;
+	} 
+
   return result;
 }
 
@@ -494,6 +509,28 @@ CAstExpression* CAstStatReturn::GetExpression(void) const
 
 bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const
 {
+	const CType *st = GetScope()->GetType();
+	CAstExpression *e = GetExpression();
+	if (st->Match(CTypeManager::Get()->GetNull())) {
+		if (e != NULL) {
+			if (t != NULL) *t = e->GetToken();
+			if (msg != NULL) *msg = "superfluous expression after return.";
+			return false;
+		}
+	} else {
+		if (e == NULL) {
+			if (t != NULL) *t = GetToken();
+			if (msg != NULL) *msg = "expression expected after return.";
+			return false;
+		}
+		if (!e->TypeCheck(t, msg)) return false;
+		if (!st->Match(e->GetType())) {
+			if (t != NULL) *t = e->GetToken();
+			if (msg != NULL) *msg = "return type mismatch.";
+			return false;
+		}
+	} 
+
   return true;
 }
 
