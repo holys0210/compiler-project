@@ -150,7 +150,7 @@ class CParser {
 
 		/// @brief type = basetype | type "[" [ number ] "]"
 		/// @retval CType
-		const CType*			type(void);
+		const CType*			type(bool no_open_addr);
 
 		/// @brief subroutineDecl = ( procedureDecl | functionDecl ) subroutineBody ident ";"
 		/// @param CAstModule current module

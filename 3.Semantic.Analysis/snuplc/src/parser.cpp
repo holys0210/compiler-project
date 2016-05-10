@@ -666,7 +666,9 @@ void CParser::varDeclaration(CAstScope* m){
 		}
 
 		// type
-		const CType* var_type=type();
+		// cannot use open address
+		const CType* var_type=type(true);
+
 
 		//add symbol to symtab
 		bool overlap;
@@ -690,7 +692,7 @@ void CParser::varDeclaration(CAstScope* m){
 
 }
 
-const CType* CParser::type(){
+const CType* CParser::type(bool no_open_addr){
 		CToken dim;
 		EToken tt=_scanner->Peek().GetType();
 		const CType* ct;
@@ -719,7 +721,7 @@ const CType* CParser::type(){
 		int d;
 		while(_scanner->Peek().GetType()==tLBrak){
 			Consume(tLBrak);
-			if(_scanner->Peek().GetType()==tNumber){
+			if((_scanner->Peek().GetType()==tNumber)||no_open_addr){
 				Consume(tNumber, &dim);
 				d=stoi(dim.GetValue());
 			}
@@ -844,7 +846,7 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 
 	Consume(tColon, &dummy);
 
-	const CType* var_type=type();
+	const CType* var_type=type(true);
 
 	Consume(tSemicolon, &dummy);
 
@@ -923,7 +925,7 @@ void CParser::varDecl(CAstProcedure* proc, bool is_para){
 		Consume(tComma);
 	}
 	
-	const CType* var_type=type();
+	const CType* var_type=type(!is_para);
 	//array
 	if(var_type->IsArray()){
 		var_type=CTypeManager::Get()->GetPointer(var_type);
