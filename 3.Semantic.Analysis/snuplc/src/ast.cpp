@@ -964,12 +964,38 @@ CAstExpression* CAstUnaryOp::GetOperand(void) const
 
 bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+	bool result;
+
+	switch(GetOperation()){
+		case opPos:
+		case opNeg:
+			result = (_operand->GetType() == CTypeManager::Get()->GetInt());
+			break;
+
+		case opNot:
+			result = (_operand->GetType() == CTypeManager::Get()->GetBool());
+			break;
+	}
+
+  return result;
 }
 
 const CType* CAstUnaryOp::GetType(void) const
 {
-  return CTypeManager::Get()->GetInt();
+	const CType* ct;
+	
+	switch(GetOperation()){
+		case opNot:
+			ct = CTypeManager::Get()->GetBool();
+			break;
+
+		case opPos:
+		case opNeg:
+			ct = CTypeManager::Get()->GetInt();
+			break;
+
+	}
+	return ct;
 }
 
 ostream& CAstUnaryOp::print(ostream &out, int indent) const
