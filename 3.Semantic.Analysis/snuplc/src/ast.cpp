@@ -43,6 +43,17 @@
 #include "ast.h"
 using namespace std;
 
+string OpToStr(const CAstOperation* oper){
+	ostringstream out;
+	out << oper-> GetOperation();
+	return out.str();
+}
+
+string TypeToStr(const CAstExpression* expr){
+	ostringstream out;
+	out << expr->GetType();
+	return out.str();
+}
 
 //------------------------------------------------------------------------------
 // CAstNode
@@ -834,6 +845,7 @@ CAstExpression* CAstBinaryOp::GetRight(void) const
   return _right;
 }
 
+
 bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 {
 	bool result=true;
@@ -866,7 +878,9 @@ bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 
 	}
 	if(!result){
-		*msg="binary operation type mismatch";
+		*t=GetToken();
+		*msg= OpToStr(this)+": type mismatch.\n"+"  left  operand: ";
+		*msg+=TypeToStr(_left)+"\n  right operand: "+TypeToStr(_right);
 	}
 
   return result;
@@ -976,6 +990,12 @@ bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 			result = (_operand->GetType() == CTypeManager::Get()->GetBool());
 			break;
 	}
+	if(!result){
+		*t=GetToken();
+		*msg= OpToStr(this)+": type mismatch.\n"+"  operand:      ";
+		*msg+=TypeToStr(_operand);
+	}
+
 
   return result;
 }
