@@ -651,6 +651,7 @@ void CParser::varDeclaration(CAstScope* m){
 		// varDecl = ident { "," ident } ":" type
 		index=0;
 		//ident
+		id.clear();
 		while(1){
 			Consume(tIdent, &dummy);
 			id.push_back(dummy);
@@ -668,8 +669,13 @@ void CParser::varDeclaration(CAstScope* m){
 		const CType* var_type=type();
 
 		//add symbol to symtab
+		bool overlap;
 		for(vector<CToken>::iterator it=id.begin(); it != id.end(); ++it){
-			mod_symtab->AddSymbol(m->CreateVar(it->GetValue(), var_type));
+			overlap = mod_symtab->AddSymbol(m->CreateVar(it->GetValue(), var_type));
+			if(!overlap){
+				SetError(*it, "duplicate variable declaration '"+it->GetValue()+"'.");
+			}
+
 		}
 		/////////
 		
