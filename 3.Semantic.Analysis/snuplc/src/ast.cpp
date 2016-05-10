@@ -517,7 +517,8 @@ bool CAstStatReturn::TypeCheck(CToken *t, string *msg) const
 			if (msg != NULL) *msg = "superfluous expression after return.";
 			return false;
 		}
-	} else {
+	}
+	else {
 		if (e == NULL) {
 			if (t != NULL) *t = GetToken();
 			if (msg != NULL) *msg = "expression expected after return.";
@@ -835,12 +836,67 @@ CAstExpression* CAstBinaryOp::GetRight(void) const
 
 bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+	bool result=true;
+	CTypeManager* tm =CTypeManager::Get();
+
+	switch(GetOperation()){
+		case opAdd:
+		case opSub:
+		case opMul:
+		case opDiv:
+			result = (_left->GetType()==tm->GetInt())&&(_right->GetType()==tm->GetInt());
+			break;
+
+		case opAnd:
+		case opOr:
+			result = (_left->GetType() == tm->GetBool())&&(_right->GetType()==tm->GetBool());
+			break;
+
+		case opEqual:
+		case opNotEqual:
+			result = (_left->GetType() == _right->GetType());
+			break;
+
+		case opLessThan:
+		case opLessEqual:
+		case opBiggerEqual:
+		case opBiggerThan:
+			result = (_left->GetType() == _right->GetType()) && ( (_left->GetType()==tm->GetInt())||(_left->GetType()==tm->GetChar()));
+			break;
+
+	}
+	if(!result){
+		*msg="binary operation type mismatch";
+	}
+
+  return result;
 }
 
 const CType* CAstBinaryOp::GetType(void) const
 {
-  return CTypeManager::Get()->GetInt();
+	const CType* ct;
+
+	switch(GetOperation()){
+		case opAdd:
+		case opSub:
+		case opMul:
+		case opDiv:
+		 ct = CTypeManager::Get()->GetInt();
+		 break;
+
+		case opAnd:
+		case opOr:
+		case opEqual:
+		case opNotEqual:
+		case opLessEqual:
+		case opLessThan:
+		case opBiggerThan:
+		case opBiggerEqual:
+			ct = CTypeManager::Get()->GetBool();
+			break;
+	}
+
+	return ct;
 }
 
 ostream& CAstBinaryOp::print(ostream &out, int indent) const
