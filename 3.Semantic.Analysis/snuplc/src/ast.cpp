@@ -410,13 +410,18 @@ bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 
 	if(result){
 		// if lhs is array type
-		// TODO
-
-		result= (_lhs->GetType()==_rhs->GetType());
-
-		if(!result){
+		if( _lhs->GetType()->IsArray()){
+			result=false;
 			*t=GetToken();
-			*msg = "incompatible types in assignment:\n  LHS: "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
+			*msg = "assignments to compound types are not supported.\n  LHS:  "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
+		}
+		else{
+			result= (_lhs->GetType()==_rhs->GetType());
+
+			if(!result){
+				*t=GetToken();
+				*msg = "incompatible types in assignment:\n  LHS: "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
+			}
 		}
 	}
 
@@ -1448,6 +1453,14 @@ string CAstConstant::GetValueStr(void) const
 
 bool CAstConstant::TypeCheck(CToken *t, string *msg) const
 {
+	if(GetType()->IsInt()){
+		if( (_value > 2147483647) || (_value < -2147483648)){
+			*t=GetToken();
+			*msg="integer constant outside valid range.";
+			return false;
+		}
+	}
+
   return true;
 }
 
