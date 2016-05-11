@@ -404,7 +404,20 @@ CAstExpression* CAstStatAssign::GetRHS(void) const
 
 bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+	bool result = true;
+
+	result = (_lhs->TypeCheck(t, msg)) && (_rhs->TypeCheck(t, msg));
+
+	if(result){
+		result= (_lhs->GetType()==_rhs->GetType());
+
+		if(!result){
+			*t=GetToken();
+			*msg = "left and right type mismatch";
+		}
+	}
+
+  return result;
 }
 
 const CType* CAstStatAssign::GetType(void) const
