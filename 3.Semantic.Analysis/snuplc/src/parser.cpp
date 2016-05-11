@@ -819,7 +819,7 @@ CAstProcedure* CParser::procedureDecl(CAstModule* m){
 
 	if(!flag){
 		//already exist
-		SetError(name, "Another symbol with same name already exist");
+		SetError(name, "duplicate procedure/function declaration '"+name.GetValue()+"'.");
 	}
 
 
