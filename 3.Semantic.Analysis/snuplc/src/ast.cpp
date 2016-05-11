@@ -409,11 +409,14 @@ bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 	result = (_lhs->TypeCheck(t, msg)) && (_rhs->TypeCheck(t, msg));
 
 	if(result){
+		// if lhs is array type
+		// TODO
+
 		result= (_lhs->GetType()==_rhs->GetType());
 
 		if(!result){
 			*t=GetToken();
-			*msg = "left and right type mismatch";
+			*msg = "incompatible types in assignment:\n  LHS: "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
 		}
 	}
 
