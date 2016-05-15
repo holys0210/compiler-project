@@ -321,7 +321,7 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 	CSymtab* symtab=s->GetSymbolTable();
 	const CSymbol* sym = symtab->FindSymbol(name.GetValue());
 	if(sym==NULL){
-		SetError(name, "No identifier in symbol table");
+		SetError(name, "undefined identifier.");
 	}
 
 	const CType* ctype=sym->GetDataType();
@@ -943,7 +943,10 @@ void CParser::varDecl(CAstProcedure* proc, bool is_para){
 			sym=proc->CreateVar(it->GetValue(), var_type);
 		}
 
-		symtab->AddSymbol(sym);
+		bool overlap=symtab->AddSymbol(sym);
+		if(!overlap){
+			SetError(*it, "duplicate variable declaration '"+it->GetValue()+"'.");
+		}
 		symproc->AddParam(new CSymParam(i++, it->GetValue(), var_type));
 	}
 
