@@ -873,6 +873,11 @@ bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 	bool result=true;
 	CTypeManager* tm =CTypeManager::Get();
 
+	result = (_left->TypeCheck(t, msg)) && (_right->TypeCheck(t, msg));
+	if(!result){
+		return result;
+	}
+
 	switch(GetOperation()){
 		case opAdd:
 		case opSub:
