@@ -49,11 +49,12 @@ string OpToStr(const CAstOperation* oper){
 	return out.str();
 }
 
-string TypeToStr(const CAstExpression* expr){
+string TypeToStr(const CType* ct){
 	ostringstream out;
-	out << expr->GetType();
+	ct->print(out, 0 );
 	return out.str();
 }
+
 
 //------------------------------------------------------------------------------
 // CAstNode
@@ -413,14 +414,14 @@ bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 		if( _lhs->GetType()->IsArray()){
 			result=false;
 			*t=GetToken();
-			*msg = "assignments to compound types are not supported.\n  LHS:  "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
+			*msg = "assignments to compound types are not supported.\n  LHS:  "+TypeToStr(_lhs->GetType())+"\n  RHS: "+TypeToStr(_rhs->GetType());
 		}
 		else{
 			result= (_lhs->GetType()==_rhs->GetType());
 
 			if(!result){
 				*t=GetToken();
-				*msg = "incompatible types in assignment:\n  LHS: "+TypeToStr(_lhs)+"\n  RHS: "+TypeToStr(_rhs);
+				*msg = "incompatible types in assignment:\n  LHS: "+TypeToStr(_lhs->GetType())+"\n  RHS: "+TypeToStr(_rhs->GetType());
 			}
 		}
 	}
@@ -901,7 +902,7 @@ bool CAstBinaryOp::TypeCheck(CToken *t, string *msg) const
 	if(!result){
 		*t=GetToken();
 		*msg= OpToStr(this)+": type mismatch.\n"+"  left  operand: ";
-		*msg+=TypeToStr(_left)+"\n  right operand: "+TypeToStr(_right);
+		*msg+=TypeToStr(_left->GetType())+"\n  right operand: "+TypeToStr(_right->GetType());
 	}
 
   return result;
@@ -1014,7 +1015,7 @@ bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 	if(!result){
 		*t=GetToken();
 		*msg= OpToStr(this)+": type mismatch.\n"+"  operand:      ";
-		*msg+=TypeToStr(_operand);
+		*msg+=TypeToStr(_operand->GetType());
 	}
 
 
@@ -1181,7 +1182,33 @@ CAstExpression* CAstFunctionCall::GetArg(int index) const
 
 bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const
 {
-  return true;
+	bool result = true;
+	if(_symbol->GetNParams() > GetNArgs()){
+		*t=GetToken();
+		*msg="not enough arguments.";
+		result=false;
+	}
+	else if(_symbol->GetNParams() < GetNArgs()){
+		*t=GetToken();
+		*msg="too many arguments.";
+		result=false;
+	}
+	else{
+		int n = GetNArgs();
+		for(int i=0; i<n; i++){
+			if(! GetArg(i)->TypeCheck(t, msg) ){
+				result=false;
+				break;
+			}
+			if(! GetArg(i)->GetType()->Compare(_symbol->GetParam(i)->GetDataType())){
+				result=false;
+				*t=GetArg(i)->GetToken();
+				*msg="parameter "+to_string(i+1)+": argument type mismatch.\n  expected "+TypeToStr(_symbol->GetParam(i)->GetDataType())+"\n  got      "+TypeToStr(GetArg(i)->GetType());
+				break;
+			}
+		}
+	}
+  return result;
 }
 
 const CType* CAstFunctionCall::GetType(void) const
