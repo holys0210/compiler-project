@@ -414,7 +414,7 @@ bool CAstStatAssign::TypeCheck(CToken *t, string *msg) const
 		if( _lhs->GetType()->IsArray()){
 			result=false;
 			*t=GetToken();
-			*msg = "assignments to compound types are not supported.\n  LHS:  "+TypeToStr(_lhs->GetType())+"\n  RHS: "+TypeToStr(_rhs->GetType());
+			*msg = "assignments to compound types are not supported.\n  LHS: "+TypeToStr(_lhs->GetType())+"\n  RHS: "+TypeToStr(_rhs->GetType());
 		}
 		else{
 			result= (_lhs->GetType()==_rhs->GetType());
@@ -1390,22 +1390,44 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 {
   bool result = true;
 
-	if(!_symbol->GetDataType()->IsArray()){
-		*t = GetToken();
-		*msg="invalid array expression.";
-		return false;
+	const CType* ct=_symbol->GetDataType();
+
+	if(ct->IsPointer()){
+		const CPointerType* pt = dynamic_cast<const CPointerType*>(ct);
+		ct = pt -> GetBaseType();
 	}
 
-	const CArrayType *arrtype=dynamic_cast<const CArrayType*>(_symbol->GetDataType());
 
-	if(GetNIndices() != arrtype->GetNDim()){
+
+	if(ct->IsArray()){
+		const CArrayType *arrtype=dynamic_cast<const CArrayType*>(ct);
+
+		if(GetNIndices() != arrtype->GetNDim()){
+			*t = GetToken();
+			*msg="invalid array expression.";
+			return false;
+		}
+		int N = GetNIndices();
+		for(int i=0; i<N; i++){
+			result = GetIndex(i)->TypeCheck(t, msg);
+			if(!result){
+				return result;
+			}
+			result = GetIndex(i)->GetType()->Compare(CTypeManager::Get()->GetInt());
+			if(!result){
+				*t = GetIndex(i)->GetToken();
+				*msg="invalid array index expression.";
+				return result;
+			}
+
+		}
+
+	}
+	else{
 		*t = GetToken();
-		*msg="invalid array expression.";
+		*msg="invalid array expression. not";
 		return false;
 	}
-
-	
-
 
   //assert(_done);
 
@@ -1417,7 +1439,7 @@ const CType* CAstArrayDesignator::GetType(void) const
 	const CType* type=_symbol->GetDataType();
 	const CArrayType* arr_type;
 
-	if((type->IsPointer())&&(GetNIndices()>1)){
+	if((type->IsPointer())&&(GetNIndices()>0)){
 		const CPointerType* ptr_type=dynamic_cast<const CPointerType*>(type);
 		type=ptr_type->GetBaseType();
 	}
