@@ -1378,7 +1378,24 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 {
   bool result = true;
 
-  assert(_done);
+	if(!_symbol->GetDataType()->IsArray()){
+		*t = GetToken();
+		*msg="invalid array expression.";
+		return false;
+	}
+
+	const CArrayType *arrtype=dynamic_cast<const CArrayType*>(_symbol->GetDataType());
+
+	if(GetNIndices() != arrtype->GetNDim()){
+		*t = GetToken();
+		*msg="invalid array expression.";
+		return false;
+	}
+
+	
+
+
+  //assert(_done);
 
   return result;
 }

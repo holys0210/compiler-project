@@ -326,8 +326,9 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 
 	const CType* ctype=sym->GetDataType();
 
-	if((ctype->IsArray())||(ctype->IsPointer())){
+//	if((ctype->IsArray())||(ctype->IsPointer())){
 		//array
+	if( tt== tLBrak){
 			
 		CAstArrayDesignator* design=new CAstArrayDesignator(name, sym);
 		tt=_scanner->Peek().GetType();
