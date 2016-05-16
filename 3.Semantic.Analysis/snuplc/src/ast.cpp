@@ -753,6 +753,12 @@ CAstStatement* CAstStatWhile::GetBody(void) const
 
 bool CAstStatWhile::TypeCheck(CToken *t, string *msg) const
 {
+	if(!GetCondition()->GetType()->Compare(CTypeManager::Get()->GetBool())){
+		*t=GetCondition()->GetToken();
+		*msg="boolean expression expected.";
+		return false;
+	}
+
   return true;
 }
 
