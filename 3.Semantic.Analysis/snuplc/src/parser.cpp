@@ -1064,6 +1064,13 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 					exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
 				}
 			}
+			
+			//string constant
+			CAstStringConstant* str_const=dynamic_cast<CAstStringConstant*>(exp);
+			if(str_const!=NULL){
+				exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
+			}
+
 			func_call->AddArg(exp);
 			tt=_scanner->Peek().GetType();
 			if(tt!=tComma){
