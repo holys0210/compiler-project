@@ -410,7 +410,8 @@ CAstExpression* CParser::simpleexpr(CAstScope *s)
 			n = new CAstUnaryOp(sign, sign.GetValue() == "+" ? opPos : opNeg, m);
 		}
 		else{
-			if(con->GetType()==CTypeManager::Get()->GetInt()){
+			tt=_scanner->Peek().GetType();
+			if((con->GetType()==CTypeManager::Get()->GetInt())&& (!((tt==tMulDiv)||(tt==tAnd))) ){
 				// number -> change sign
 				long long v = con->GetValue();
 				con->SetValue(-v);

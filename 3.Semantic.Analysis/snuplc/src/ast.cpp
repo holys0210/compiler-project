@@ -187,6 +187,8 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const
 		}
 		vector<CAstScope*>::const_iterator it = _children.begin();
 		while (result && (it != _children.end())) {
+			//return type check
+			// if return type is array, error
 			CAstProcedure*proc=dynamic_cast<CAstProcedure*>(*it);
 			if(proc!=NULL){
 				if(proc->GetType()->IsArray()){
@@ -196,6 +198,7 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const
 					break;
 				}
 			}
+			// child scope type check
 			result = (*it)->TypeCheck(t, msg);
 			it++;
 		}
@@ -1028,6 +1031,11 @@ CAstExpression* CAstUnaryOp::GetOperand(void) const
 bool CAstUnaryOp::TypeCheck(CToken *t, string *msg) const
 {
 	bool result;
+
+	result = _operand->TypeCheck(t, msg);
+	if(!result){
+		return result;
+	}
 
 	switch(GetOperation()){
 		case opPos:
