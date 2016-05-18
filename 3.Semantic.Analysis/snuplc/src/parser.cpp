@@ -615,7 +615,35 @@ CAstConstant* CParser::character(void){
 	CToken t;
 	Consume(tCharConst, &t);
 	const char* c=t.GetValue().c_str();
-	CAstConstant* con= new CAstConstant(t, CTypeManager::Get()->GetChar(), c[0]);
+	CAstConstant* con;
+	if(c[0]!='\\'){
+		con= new CAstConstant(t, CTypeManager::Get()->GetChar(), c[0]);
+	}
+	else{
+		int charnum;
+		switch(c[1]){
+			case 'n':
+				charnum=10;
+				break;
+			case 't':
+				charnum=9;
+				break;
+			case '0':
+				charnum=0;
+				break;
+			case '"':
+				charnum=34;
+				break;
+			case '\'':
+				charnum=39;
+				break;
+			case '\\':
+				charnum=92;
+				break;
+		}
+		con= new CAstConstant(t, CTypeManager::Get()->GetChar(), charnum);
+	}
+
 	if(con==NULL){
 		SetError(t, "can't create const char");
 	}
