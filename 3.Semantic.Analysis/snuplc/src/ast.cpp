@@ -193,6 +193,7 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const
 	} catch (...) {
 		result = false;
 	} 
+	if(result)
 
   return result;
 }
@@ -384,7 +385,7 @@ CTacAddr* CAstStatement::ToTac(CCodeBlock *cb, CTacLabel *next)
 
 //------------------------------------------------------------------------------
 // CAstStatAssign
-//
+
 CAstStatAssign::CAstStatAssign(CToken t,
                                CAstDesignator *lhs, CAstExpression *rhs)
   : CAstStatement(t), _lhs(lhs), _rhs(rhs)
@@ -1121,11 +1122,18 @@ CAstExpression* CAstSpecialOp::GetOperand(void) const
 
 bool CAstSpecialOp::TypeCheck(CToken *t, string *msg) const
 {
-  return false;
+	if(GetOperation() == opAddress){
+		return _operand->TypeCheck(t, msg);
+	}
+ // return false;
+ return true;
 }
 
 const CType* CAstSpecialOp::GetType(void) const
 {
+	if(GetOperation() == opAddress){
+		return CTypeManager::Get()->GetPointer(_operand->GetType());
+	}
   return NULL;
 }
 
@@ -1217,12 +1225,25 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const
 				result=false;
 				break;
 			}
-			if(! GetArg(i)->GetType()->Compare(_symbol->GetParam(i)->GetDataType())){
+
+
+			const CType* ct= _symbol->GetParam(i)->GetDataType();
+
+
+			if((ct->IsPointer())&&(!GetArg(i)->GetType()->IsPointer())){
+				const CPointerType* cpt=dynamic_cast<const CPointerType*>(ct);
+				ct = cpt->GetBaseType();
+//	ct= CTypeManager::Get()->GetPointer(ct);
+}
+
+
+		if(! ct->Match( GetArg(i)->GetType())){
 				result=false;
 				*t=GetArg(i)->GetToken();
 				*msg="parameter "+to_string(i+1)+": argument type mismatch.\n  expected "+TypeToStr(_symbol->GetParam(i)->GetDataType())+"\n  got      "+TypeToStr(GetArg(i)->GetType());
 				break;
 			}
+
 		}
 	}
   return result;
@@ -1311,6 +1332,15 @@ bool CAstDesignator::TypeCheck(CToken *t, string *msg) const
 
 const CType* CAstDesignator::GetType(void) const
 {
+	/*
+	if(GetSymbol()->GetDataType()->IsPointer()){
+		const CPointerType* cpt=dynamic_cast<const CPointerType*>(GetSymbol()->GetDataType());
+		cpt->GetBaseType()->print(cout, 0);
+		cout<<endl;
+		return CTypeManager::Get()->GetPointer(cpt->GetBaseType());
+
+	}
+	*/
   return GetSymbol()->GetDataType();
 }
 
@@ -1391,10 +1421,12 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
   bool result = true;
 
 	const CType* ct=_symbol->GetDataType();
+	bool isptr=false;
 
 	if(ct->IsPointer()){
 		const CPointerType* pt = dynamic_cast<const CPointerType*>(ct);
 		ct = pt -> GetBaseType();
+		isptr=true;
 	}
 
 
@@ -1402,10 +1434,19 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 	if(ct->IsArray()){
 		const CArrayType *arrtype=dynamic_cast<const CArrayType*>(ct);
 
-		if(GetNIndices() != arrtype->GetNDim()){
-			*t = GetToken();
-			*msg="invalid array expression.";
-			return false;
+		if(isptr){
+			if(GetNIndices()>arrtype->GetNDim()){
+				*t = GetToken();
+				*msg="invalid array expression.";
+				return false;
+			}
+		}
+		else{
+			if(GetNIndices() > arrtype->GetNDim()){
+				*t = GetToken();
+				*msg="invalid array expression.";
+				return false;
+			}
 		}
 		int N = GetNIndices();
 		for(int i=0; i<N; i++){
@@ -1413,6 +1454,7 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 			if(!result){
 				return result;
 			}
+
 			result = GetIndex(i)->GetType()->Compare(CTypeManager::Get()->GetInt());
 			if(!result){
 				*t = GetIndex(i)->GetToken();
@@ -1425,7 +1467,7 @@ bool CAstArrayDesignator::TypeCheck(CToken *t, string *msg) const
 	}
 	else{
 		*t = GetToken();
-		*msg="invalid array expression. not";
+		*msg="invalid array expression.";
 		return false;
 	}
 

@@ -343,6 +343,9 @@ CAstDesignator* CParser::qualident(CAstScope* s, CToken name){
 		return design;
 
 	}
+	else if((ctype->IsArray())||(ctype->IsPointer())){
+		return new CAstArrayDesignator(name, sym);
+	}
 	else{
 		// non-array
 		return new CAstDesignator(name, sym);
@@ -928,7 +931,7 @@ void CParser::varDecl(CAstProcedure* proc, bool is_para){
 	
 	const CType* var_type=type(!is_para);
 	//array
-	if(var_type->IsArray()){
+	if(is_para&&var_type->IsArray()){
 		var_type=CTypeManager::Get()->GetPointer(var_type);
 	}
 	CSymtab* symtab = proc->GetSymbolTable();
@@ -1033,9 +1036,13 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 
 			CAstArrayDesignator* arr_dsg=dynamic_cast<CAstArrayDesignator*>(exp);
 			if(arr_dsg!=NULL){
+				/*
 				const CSymParam *param=symproc->GetParam(index);
 				const CType* ct=param->GetDataType();
 				int N = arr_dsg->GetNIndices();
+				bool isptr=ct->IsPointer();
+
+				if( N < ct->
 				if((ct->IsPointer())&&!(arr_dsg->GetType()->IsPointer())){
 					ct=(dynamic_cast<const CPointerType*>(ct))->GetBaseType();
 				}
@@ -1046,6 +1053,13 @@ CAstFunctionCall* CParser::subroutineCall_expr(CAstScope* s, CToken name){
 					}
 					ct=(dynamic_cast<const CArrayType*>(ct))->GetInnerType();
 				}
+				if(ct->IsArray()){
+					if(isptr){
+						exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
+					}
+				}
+				*/
+				const CType* ct=arr_dsg->GetType();
 				if(ct->IsArray()){
 					exp=new CAstSpecialOp(exp->GetToken(), opAddress, exp);
 				}
