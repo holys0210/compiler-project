@@ -187,6 +187,15 @@ bool CAstScope::TypeCheck(CToken *t, string *msg) const
 		}
 		vector<CAstScope*>::const_iterator it = _children.begin();
 		while (result && (it != _children.end())) {
+			CAstProcedure*proc=dynamic_cast<CAstProcedure*>(*it);
+			if(proc!=NULL){
+				if(proc->GetType()->IsArray()){
+					*t=proc->GetToken();
+					*msg="invalid composite type for function.";
+					result=false;
+					break;
+				}
+			}
 			result = (*it)->TypeCheck(t, msg);
 			it++;
 		}
@@ -1234,7 +1243,7 @@ bool CAstFunctionCall::TypeCheck(CToken *t, string *msg) const
 				const CPointerType* cpt=dynamic_cast<const CPointerType*>(ct);
 				ct = cpt->GetBaseType();
 //	ct= CTypeManager::Get()->GetPointer(ct);
-}
+			}
 
 
 		if(! ct->Match( GetArg(i)->GetType())){
