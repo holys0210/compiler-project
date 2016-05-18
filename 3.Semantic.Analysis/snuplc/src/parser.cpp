@@ -879,7 +879,12 @@ CAstProcedure* CParser::functionDecl(CAstModule* m){
 
 	Consume(tColon, &dummy);
 
+	CToken type_token= _scanner->Peek();
 	const CType* var_type=type(true);
+
+	if(var_type->IsArray()){
+		SetError(type_token, "invalid composite type for function.");
+	}
 
 	Consume(tSemicolon, &dummy);
 
