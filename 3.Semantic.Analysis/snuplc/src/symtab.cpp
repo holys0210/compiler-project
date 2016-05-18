@@ -256,7 +256,7 @@ ostream& CSymProc::print(ostream &out, int indent) const
 // CSymtab
 //
 CSymtab::CSymtab(void)
-	: _parent(NULL)
+  : _parent(NULL)
 {
 }
 
@@ -338,13 +338,13 @@ ostream& CSymtab::print(ostream &out, int indent) const
   return out;
 }
 
-ostream& operator<<(ostream &out, const CSymtab &s)
+ostream& operator<<(ostream &out, const CSymtab &t)
 {
-  return s.print(out);
+  return t.print(out);
 }
 
-ostream& operator<<(ostream &out, const CSymtab *s)
+ostream& operator<<(ostream &out, const CSymtab *t)
 {
-  return s->print(out);
+  return t->print(out);
 }
 
