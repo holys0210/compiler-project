@@ -484,7 +484,20 @@ void CAstStatAssign::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CTacAddr* left_tac=_lhs->ToTac(cb);
-	CTacAddr* right_tac=_rhs->ToTac(cb);
+	CTacAddr* right_tac=NULL;
+	CTacLabel* ltrue=cb->CreateLabel();
+	CTacLabel* lfalse=cb->CreateLabel();
+	if(_rhs->GetType()->IsBoolean()){
+		right_tac=_rhs->ToTac(cb, ltrue, lfalse );
+	}
+	else{
+		right_tac=_rhs->ToTac(cb);
+	}
+
+	if(right_tac == NULL){
+		cout<<"eroor!!!!!!!\n";
+	}
+
 	cb->AddInstr(new CTacInstr(opAssign, left_tac, right_tac));
   return NULL;
 }
@@ -1017,7 +1030,29 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb)
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
                               CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+	CTacAddr* left_tac=_left->ToTac(cb);
+	CTacAddr* right_tac=_right->ToTac(cb);
+	CTacTemp* temp_val=cb->CreateTemp(GetType());
+	CTacLabel* end_label=cb->CreateLabel();
+	// if ( expr ) goto ltrue
+	cb->AddInstr(new CTacInstr(GetOperation(), ltrue, left_tac, right_tac));
+	// goto lfalse
+	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+	// ltrue:
+	// 				code
+	// 				goto end
+	cb->AddInstr(ltrue);
+	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(1)));
+	cb->AddInstr( new CTacInstr(opGoto, end_label));
+	// lfalse:
+	// code
+	cb->AddInstr( lfalse);
+	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(0)));
+	// end:
+	cb->AddInstr(end_label);
+
+
+  return temp_val;
 }
 
 
