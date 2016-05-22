@@ -1316,6 +1316,15 @@ void CAstFunctionCall::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstFunctionCall::ToTac(CCodeBlock *cb)
 {
+	int n = GetNArgs();
+	CTacAddr* arg_tac;
+	for(int i=n-1; i>=0; i--){
+		arg_tac=GetArg(i)->ToTac(cb);
+		cb->AddInstr( new CTacInstr(opParam, new CTacConst(i), arg_tac));
+	}
+
+	cb->AddInstr( new CTacInstr(opCall, new CTacLabel(_symbol->GetName())));
+
   return NULL;
 }
 
