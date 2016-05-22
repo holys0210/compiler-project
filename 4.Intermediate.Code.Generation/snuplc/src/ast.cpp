@@ -483,6 +483,7 @@ void CAstStatAssign::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
+	cb->AddInstr(new CTacInstr(opAssign, _lhs->ToTac(cb), _rhs->ToTac(cb)));
   return NULL;
 }
 
@@ -1003,7 +1004,9 @@ void CAstBinaryOp::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+	CTacTemp* temp_val=cb->CreateTemp(GetType());
+	cb->AddInstr(new CTacInstr(GetOperation(), temp_val, _left->ToTac(cb), _right->ToTac(cb)));
+  return temp_val;
 }
 
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
@@ -1392,7 +1395,7 @@ void CAstDesignator::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+  return new CTacName(GetSymbol());
 }
 
 CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb,
@@ -1634,7 +1637,7 @@ string CAstConstant::dotAttr(void) const
 
 CTacAddr* CAstConstant::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+  return new CTacConst(GetValue());
 }
 
 CTacAddr* CAstConstant::ToTac(CCodeBlock *cb,
