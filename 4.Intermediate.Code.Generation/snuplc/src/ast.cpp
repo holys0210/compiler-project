@@ -515,6 +515,7 @@ CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 	}
 
 	cb->AddInstr(new CTacInstr(opAssign, left_tac, right_tac));
+
   return NULL;
 }
 
@@ -562,7 +563,9 @@ void CAstStatCall::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstStatCall::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-  return GetCall()->ToTac(cb);
+	CTacAddr* cta = GetCall()->ToTac(cb);
+	cb->AddInstr(new CTacInstr(opGoto, next));
+  return cta;
 }
 
 
@@ -662,6 +665,7 @@ void CAstStatReturn::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	cb->AddInstr( new CTacInstr(opReturn, GetExpression()->ToTac(cb)));
+	cb->AddInstr( new CTacInstr(opGoto, next));
   return NULL;
 }
 
@@ -774,7 +778,6 @@ void CAstStatIf::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CAstExpression* cond=GetCondition();
-	CTacLabel* end_label=cb->CreateLabel();
 	CTacLabel* if_true = cb->CreateLabel("if_true");
 	CTacLabel* if_false = cb->CreateLabel("if_false");
 
@@ -784,16 +787,17 @@ CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 	// 				code
 	// 				goto end
 	cb->AddInstr(if_true);
-	GetIfBody()->ToTac(cb, end_label);
-	cb->AddInstr(new CTacInstr(opGoto, end_label));
+	GetIfBody()->ToTac(cb, next);
+	cb->AddInstr(new CTacInstr(opGoto, next));
 	// lfalse:
 	// code
 	cb->AddInstr( if_false);
 	if(GetElseBody()!=NULL){
-		GetElseBody()->ToTac(cb, end_label);
+		GetElseBody()->ToTac(cb, next);
 	}
 	// end:
-	cb->AddInstr(end_label);
+
+	cb->AddInstr(new CTacInstr(opGoto, next));
 
 
   return NULL;
@@ -881,19 +885,21 @@ void CAstStatWhile::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstStatWhile::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
-	CTacLabel* end_label = cb->CreateLabel();
 	CTacLabel* cond_label = cb->CreateLabel("while_cond");
 	CTacLabel* body_label = cb->CreateLabel("while_body");
 
 	// while_cond:
 	// cond code
 	cb->AddInstr( cond_label );
-	GetCondition()->ToTac(cb, body_label, end_label);
+	GetCondition()->ToTac(cb, body_label, next);
 	
 	// while_body:
 	// body code
 	cb->AddInstr( body_label);
 	GetBody()->ToTac(cb, cond_label);
+	cb->AddInstr(new CTacInstr(opGoto, cond_label));
+
+	cb->AddInstr(new CTacInstr(opGoto, next));
 
 
 
