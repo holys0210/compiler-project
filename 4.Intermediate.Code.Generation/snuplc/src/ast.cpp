@@ -484,11 +484,13 @@ void CAstStatAssign::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CTacAddr* left_tac=_lhs->ToTac(cb);
-	CTacAddr* right_tac=cb->CreateTemp(_rhs->GetType());
+	CTacAddr* right_tac=NULL;
 	CTacLabel* ltrue=cb->CreateLabel();
 	CTacLabel* lfalse=cb->CreateLabel();
 	CTacLabel* end_label=cb->CreateLabel();
-	if(_rhs->GetType()->IsBoolean()){
+	if(GetType()->IsBoolean()){
+
+		right_tac=cb->CreateTemp(_rhs->GetType());
 		_rhs->ToTac(cb, ltrue, lfalse );
 
 		// ltrue:
@@ -505,7 +507,7 @@ CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 		cb->AddInstr(end_label);
 	}
 	else{
-		_rhs->ToTac(cb);
+		right_tac = _rhs->ToTac(cb);
 	}
 
 	if(right_tac == NULL){
@@ -772,35 +774,28 @@ void CAstStatIf::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CAstExpression* cond=GetCondition();
-	CTacLabel* if_true = cb->CreateLabel("1_if_true");
-	CTacLabel* if_false = cb->CreateLabel("1_if_false");
+	CTacLabel* end_label=cb->CreateLabel();
+	CTacLabel* if_true = cb->CreateLabel("if_true");
+	CTacLabel* if_false = cb->CreateLabel("if_false");
 
 	cond->ToTac(cb, if_true, if_false);
-/*
-	CTacAddr* left_tac=_left->ToTac(cb);
-	CTacAddr* right_tac=_right->ToTac(cb);
-	CTacTemp* temp_val=cb->CreateTemp(GetType());
-	CTacLabel* end_label=cb->CreateLabel();
-	// if ( expr ) goto ltrue
-	cb->AddInstr(new CTacInstr(GetOperation(), ltrue, left_tac, right_tac));
-	// goto lfalse
-	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+
 	// ltrue:
 	// 				code
 	// 				goto end
-	cb->AddInstr(ltrue);
-	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(1)));
-	cb->AddInstr( new CTacInstr(opGoto, end_label));
+	cb->AddInstr(if_true);
+	GetIfBody()->ToTac(cb, end_label);
+	cb->AddInstr(new CTacInstr(opGoto, end_label));
 	// lfalse:
 	// code
-	cb->AddInstr( lfalse);
-	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(0)));
+	cb->AddInstr( if_false);
+	if(GetElseBody()!=NULL){
+		GetElseBody()->ToTac(cb, end_label);
+	}
 	// end:
 	cb->AddInstr(end_label);
 
 
-  return temp_val;
-*/
   return NULL;
 }
 
