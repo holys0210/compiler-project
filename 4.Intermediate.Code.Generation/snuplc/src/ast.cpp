@@ -484,14 +484,28 @@ void CAstStatAssign::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CTacAddr* left_tac=_lhs->ToTac(cb);
-	CTacAddr* right_tac=NULL;
+	CTacAddr* right_tac=cb->CreateTemp(_rhs->GetType());
 	CTacLabel* ltrue=cb->CreateLabel();
 	CTacLabel* lfalse=cb->CreateLabel();
+	CTacLabel* end_label=cb->CreateLabel();
 	if(_rhs->GetType()->IsBoolean()){
-		right_tac=_rhs->ToTac(cb, ltrue, lfalse );
+		_rhs->ToTac(cb, ltrue, lfalse );
+
+		// ltrue:
+		// 				code
+		// 				goto end
+		cb->AddInstr(ltrue);
+		cb->AddInstr(new CTacInstr(opAssign, right_tac, new CTacConst(1)));
+		cb->AddInstr( new CTacInstr(opGoto, end_label));
+		// lfalse:
+		// code
+		cb->AddInstr( lfalse);
+		cb->AddInstr(new CTacInstr(opAssign, right_tac, new CTacConst(0)));
+		// end:
+		cb->AddInstr(end_label);
 	}
 	else{
-		right_tac=_rhs->ToTac(cb);
+		_rhs->ToTac(cb);
 	}
 
 	if(right_tac == NULL){
@@ -757,6 +771,36 @@ void CAstStatIf::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
+	CAstExpression* cond=GetCondition();
+	CTacLabel* if_true = cb->CreateLabel("1_if_true");
+	CTacLabel* if_false = cb->CreateLabel("1_if_false");
+
+	cond->ToTac(cb, if_true, if_false);
+/*
+	CTacAddr* left_tac=_left->ToTac(cb);
+	CTacAddr* right_tac=_right->ToTac(cb);
+	CTacTemp* temp_val=cb->CreateTemp(GetType());
+	CTacLabel* end_label=cb->CreateLabel();
+	// if ( expr ) goto ltrue
+	cb->AddInstr(new CTacInstr(GetOperation(), ltrue, left_tac, right_tac));
+	// goto lfalse
+	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+	// ltrue:
+	// 				code
+	// 				goto end
+	cb->AddInstr(ltrue);
+	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(1)));
+	cb->AddInstr( new CTacInstr(opGoto, end_label));
+	// lfalse:
+	// code
+	cb->AddInstr( lfalse);
+	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(0)));
+	// end:
+	cb->AddInstr(end_label);
+
+
+  return temp_val;
+*/
   return NULL;
 }
 
@@ -1030,29 +1074,41 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb)
 CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
                               CTacLabel *ltrue, CTacLabel *lfalse)
 {
-	CTacAddr* left_tac=_left->ToTac(cb);
-	CTacAddr* right_tac=_right->ToTac(cb);
-	CTacTemp* temp_val=cb->CreateTemp(GetType());
-	CTacLabel* end_label=cb->CreateLabel();
-	// if ( expr ) goto ltrue
-	cb->AddInstr(new CTacInstr(GetOperation(), ltrue, left_tac, right_tac));
-	// goto lfalse
-	cb->AddInstr(new CTacInstr(opGoto, lfalse));
-	// ltrue:
-	// 				code
-	// 				goto end
-	cb->AddInstr(ltrue);
-	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(1)));
-	cb->AddInstr( new CTacInstr(opGoto, end_label));
-	// lfalse:
-	// code
-	cb->AddInstr( lfalse);
-	cb->AddInstr(new CTacInstr(opAssign, temp_val, new CTacConst(0)));
-	// end:
-	cb->AddInstr(end_label);
+	CTacAddr* left_tac, *right_tac;
+	CTacLabel* mid_lab= cb->CreateLabel();
+	if( GetOperation()==opAnd){
+		// left
+		left_tac = _left->ToTac(cb, mid_lab, lfalse);
+		
+		// mid :
+		cb->AddInstr( mid_lab );
+
+		// right
+		right_tac = _right->ToTac(cb, ltrue, lfalse);
+	}
+	else if( GetOperation()==opOr){
+		//left
+		_left->ToTac(cb, ltrue, mid_lab);
+
+		// mid :
+		cb->AddInstr( mid_lab);
+
+		// right
+		_right->ToTac(cb, ltrue, lfalse);
+
+	}
+	else{
+		left_tac=_left->ToTac(cb);
+		right_tac= _right->ToTac(cb);
+
+		// if ( expr ) goto ltrue
+		cb->AddInstr(new CTacInstr(GetOperation(), ltrue, left_tac, right_tac));
+		// goto lfalse
+		cb->AddInstr(new CTacInstr(opGoto, lfalse));
+	}
 
 
-  return temp_val;
+	return NULL;
 }
 
 
