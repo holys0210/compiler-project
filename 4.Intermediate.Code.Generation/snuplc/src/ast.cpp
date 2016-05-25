@@ -1677,7 +1677,73 @@ void CAstArrayDesignator::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+	CTacTemp* temp, *array, *index, *dim, *real_index, *dofs, *pos;
+	const CType* int_type=CTypeManager::Get()->GetInt();
+
+	int n = GetNIndices();
+	// address of array
+	array = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+	cb->AddInstr( new CTacInstr(opAddress, array,new CTacName(GetSymbol())));
+	// dim = 1
+	if(n==1){
+		real_index = cb->CreateTemp(int_type);
+		cb->AddInstr( new CTacInstr(opMul, real_index, GetIndex(0)->ToTac(cb), new CTacConst( GetType()->GetDataSize())));
+	}
+	// dim > 1
+	else{
+
+		for(int i=1; i<n; i++){
+			// call DIM
+			// param1 : which dim
+			cb->AddInstr( new CTacInstr(opParam, new CTacConst(1), new CTacConst(i+1)));
+			// param0 : array pointer
+			temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+			cb->AddInstr( new CTacInstr(opAddress, temp, new CTacName(GetSymbol())));
+			cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+			// call DIM
+			dim = cb->CreateTemp(int_type);
+			const CSymbol* sym = cb->GetOwner()->GetSymbolTable()->FindSymbol("DIM");
+			cb->AddInstr( new CTacInstr(opCall, dim, new CTacName(sym)));
+			// mul
+			temp = cb->CreateTemp(int_type);
+			if(i==1){
+				cb->AddInstr( new CTacInstr(opMul, temp, GetIndex(0)->ToTac(cb), dim));
+			}
+			else{
+				cb->AddInstr( new CTacInstr(opMul, temp, index, dim));
+			}
+			// add
+			index = cb->CreateTemp(int_type);
+			cb->AddInstr( new CTacInstr(opAdd, index, temp, GetIndex(i)->ToTac(cb)));
+
+		}
+		// multiply data size
+		real_index = cb->CreateTemp(int_type);
+		cb->AddInstr( new CTacInstr(opMul, real_index, index, new CTacConst( GetType()->GetDataSize())));
+
+	}
+
+
+	// DOFS
+	// param 0 : address of array
+	temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+	cb->AddInstr( new CTacInstr(opAddress, temp,new CTacName(GetSymbol())));
+	cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+	// call DOFS
+	dofs = cb->CreateTemp(int_type);
+	const CSymbol* sym = cb->GetOwner()->GetSymbolTable()->FindSymbol("DOFS");
+	cb->AddInstr( new CTacInstr(opCall, dofs, new CTacName(sym)));
+
+	// calculate real position
+	temp = cb->CreateTemp(int_type);
+	cb->AddInstr( new CTacInstr(opAdd, temp, real_index, dofs));
+	pos = cb->CreateTemp(int_type);
+	cb->AddInstr( new CTacInstr(opAdd, pos, array, temp));
+
+	// return reference of pos
+	CTacReference* ref_pos = new CTacReference(pos->GetSymbol());
+
+  return ref_pos;
 }
 
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb,
