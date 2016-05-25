@@ -485,17 +485,17 @@ CTacAddr* CAstStatAssign::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CTacAddr* left_tac=_lhs->ToTac(cb);
 	CTacAddr* right_tac=NULL;
-	CTacLabel* ltrue=cb->CreateLabel();
-	CTacLabel* lfalse=cb->CreateLabel();
-	CTacLabel* end_label=cb->CreateLabel();
-	if(GetType()->IsBoolean()){
+	if((GetType()->IsBoolean())&&(dynamic_cast<CAstOperation*>(_rhs)!=NULL)){
+		CTacLabel* ltrue=cb->CreateLabel();
+		CTacLabel* lfalse=cb->CreateLabel();
+		CTacLabel* end_label=cb->CreateLabel();
 
-		right_tac=cb->CreateTemp(_rhs->GetType());
 		_rhs->ToTac(cb, ltrue, lfalse );
 
 		// ltrue:
 		// 				code
 		// 				goto end
+		right_tac=cb->CreateTemp(_rhs->GetType());
 		cb->AddInstr(ltrue);
 		cb->AddInstr(new CTacInstr(opAssign, right_tac, new CTacConst(1)));
 		cb->AddInstr( new CTacInstr(opGoto, end_label));
