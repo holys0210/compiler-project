@@ -1231,6 +1231,14 @@ CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb)
 CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb,
                              CTacLabel *ltrue, CTacLabel *lfalse)
 {
+	CTacAddr* op_tac=GetOperand()->ToTac(cb, lfalse, ltrue);
+	/*
+	// if ( expr ) goto ltrue
+	cb->AddInstr(new CTacInstr(GetOperation(), ltrue, op_tac));
+	// goto lfalse
+	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+	*/
+
   return NULL;
 }
 
@@ -1538,7 +1546,7 @@ CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb,
                                 CTacLabel *ltrue, CTacLabel *lfalse)
 {
 	// if ( expr ) goto ltrue
-	cb->AddInstr(new CTacInstr(opEqual, ltrue, new CTacName(GetSymbol()), new CTacConst(0)));
+	cb->AddInstr(new CTacInstr(opEqual, ltrue, new CTacName(GetSymbol()), new CTacConst(1)));
 	// goto lfalse
 	cb->AddInstr(new CTacInstr(opGoto, lfalse));
 
