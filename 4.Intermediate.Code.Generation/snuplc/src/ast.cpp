@@ -1677,13 +1677,21 @@ void CAstArrayDesignator::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 {
-	CTacTemp* temp, *array, *index, *dim, *real_index, *dofs, *pos;
+	CTacTemp* temp, *index, *dim, *real_index, *dofs, *pos;
+	CTacAddr* array;
 	const CType* int_type=CTypeManager::Get()->GetInt();
+	// is pointer -> need not implicit casting
+	bool isptr=GetSymbol()->GetDataType()->IsPointer();
 
 	int n = GetNIndices();
 	// address of array
-	array = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
-	cb->AddInstr( new CTacInstr(opAddress, array,new CTacName(GetSymbol())));
+	if(isptr){
+		array = new CTacName(GetSymbol());
+	}
+	else{
+		array = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+		cb->AddInstr( new CTacInstr(opAddress, array,new CTacName(GetSymbol())));
+	}
 	// dim = 1
 	if(n==1){
 		real_index = cb->CreateTemp(int_type);
@@ -1691,15 +1699,19 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 	}
 	// dim > 1
 	else{
-
 		for(int i=1; i<n; i++){
 			// call DIM
 			// param1 : which dim
 			cb->AddInstr( new CTacInstr(opParam, new CTacConst(1), new CTacConst(i+1)));
 			// param0 : array pointer
-			temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
-			cb->AddInstr( new CTacInstr(opAddress, temp, new CTacName(GetSymbol())));
-			cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+			if(isptr){
+				cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), new CTacName(GetSymbol())));
+			}
+			else{
+				temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+				cb->AddInstr( new CTacInstr(opAddress, temp, new CTacName(GetSymbol())));
+				cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+			}
 			// call DIM
 			dim = cb->CreateTemp(int_type);
 			const CSymbol* sym = cb->GetOwner()->GetSymbolTable()->FindSymbol("DIM");
@@ -1726,9 +1738,14 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 
 	// DOFS
 	// param 0 : address of array
-	temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
-	cb->AddInstr( new CTacInstr(opAddress, temp,new CTacName(GetSymbol())));
-	cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+	if(isptr){
+		cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), new CTacName(GetSymbol())));
+	}
+	else{
+		temp = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
+		cb->AddInstr( new CTacInstr(opAddress, temp,new CTacName(GetSymbol())));
+		cb->AddInstr( new CTacInstr(opParam, new CTacConst(0), temp));
+	}
 	// call DOFS
 	dofs = cb->CreateTemp(int_type);
 	const CSymbol* sym = cb->GetOwner()->GetSymbolTable()->FindSymbol("DOFS");
