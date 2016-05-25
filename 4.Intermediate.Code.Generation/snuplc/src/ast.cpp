@@ -1304,6 +1304,20 @@ void CAstSpecialOp::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstSpecialOp::ToTac(CCodeBlock *cb)
 {
+	if(GetOperation()==opAddress){
+		CTacAddr* res=  _operand->ToTac(cb);
+		if(dynamic_cast<CTacReference*>(res) !=NULL){
+			const CArrayType* arr_type=dynamic_cast<const CArrayType*>(GetOperand()->GetType());
+			// pointer of basetype
+			CTacAddr* temp =  cb->CreateTemp(CTypeManager::Get()->GetPointer(arr_type->GetBaseType()));
+			cb->AddInstr( new CTacInstr(opAddress, temp, res));
+		return temp;
+		}
+		else{
+			return res;
+		}
+	}
+
   return NULL;
 }
 
@@ -1682,8 +1696,17 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 	const CType* int_type=CTypeManager::Get()->GetInt();
 	// is pointer -> need not implicit casting
 	bool isptr=GetSymbol()->GetDataType()->IsPointer();
-
+	const CType* ct=GetSymbol()->GetDataType();
+	const CArrayType* arr;
+	if(isptr){
+		const CPointerType* cpt=dynamic_cast<const CPointerType*>(ct);
+		ct=cpt->GetBaseType();
+	}
+	arr=dynamic_cast<const CArrayType*>(ct);
+	// from special operation?
 	int n = GetNIndices();
+	bool spe = n < arr->GetNDim();
+
 	// address of array
 	if(isptr){
 		array = new CTacName(GetSymbol());
@@ -1692,13 +1715,25 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 		array = cb->CreateTemp(CTypeManager::Get()->GetPointer(GetSymbol()->GetDataType()));
 		cb->AddInstr( new CTacInstr(opAddress, array,new CTacName(GetSymbol())));
 	}
-	// dim = 1
-	if(n==1){
+
+	// special
+	// n=0 -> always from special
+	if(n==0){
+		return array;
+	}
+	// not special && n=1
+	if((n==1)&&(!spe)){
 		real_index = cb->CreateTemp(int_type);
 		cb->AddInstr( new CTacInstr(opMul, real_index, GetIndex(0)->ToTac(cb), new CTacConst( GetType()->GetDataSize())));
 	}
 	// dim > 1
 	else{
+		bool b=false; // use to n=1
+		if(n==1){
+			//special && n=1
+			n++;
+			b=true;
+		}
 		for(int i=1; i<n; i++){
 			// call DIM
 			// param1 : which dim
@@ -1726,7 +1761,12 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 			}
 			// add
 			index = cb->CreateTemp(int_type);
-			cb->AddInstr( new CTacInstr(opAdd, index, temp, GetIndex(i)->ToTac(cb)));
+			if(b){
+				cb->AddInstr( new CTacInstr(opAdd, index, temp, new CTacConst(0)));
+			}
+			else{
+				cb->AddInstr( new CTacInstr(opAdd, index, temp, GetIndex(i)->ToTac(cb)));
+			}
 
 		}
 		// multiply data size
