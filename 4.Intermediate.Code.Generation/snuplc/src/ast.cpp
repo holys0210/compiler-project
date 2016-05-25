@@ -1537,6 +1537,11 @@ CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb)
 CTacAddr* CAstDesignator::ToTac(CCodeBlock *cb,
                                 CTacLabel *ltrue, CTacLabel *lfalse)
 {
+	// if ( expr ) goto ltrue
+	cb->AddInstr(new CTacInstr(opEqual, ltrue, new CTacName(GetSymbol()), new CTacConst(0)));
+	// goto lfalse
+	cb->AddInstr(new CTacInstr(opGoto, lfalse));
+
   return NULL;
 }
 
