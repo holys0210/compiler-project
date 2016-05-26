@@ -1170,8 +1170,6 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
 		}
 
 		// opertaion on left and right
-
-
 		
 		cb->AddInstr( new CTacInstr( GetOperation(), ltrue, left_val, right_val));
 		cb->AddInstr(new CTacInstr(opGoto, lfalse));
@@ -1288,7 +1286,10 @@ void CAstUnaryOp::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb)
 {
-  return NULL;
+	CTacAddr* oprn = GetOperand()->ToTac(cb);
+	CTacAddr* ret = cb->CreateTemp(GetType());
+	cb->AddInstr( new CTacInstr(GetOperation(), ret, oprn));
+  return ret;
 }
 
 CTacAddr* CAstUnaryOp::ToTac(CCodeBlock *cb,
@@ -1981,7 +1982,22 @@ CTacAddr* CAstConstant::ToTac(CCodeBlock *cb)
 CTacAddr* CAstConstant::ToTac(CCodeBlock *cb,
                                 CTacLabel *ltrue, CTacLabel *lfalse)
 {
-  return NULL;
+	if(GetValue()==1){
+		cb->AddInstr( new CTacInstr(opGoto, ltrue));
+	}
+	/*
+	CTacAddr* temp = cb->CreateTemp(GetType());
+	
+	if(GetValue()==1){
+		cb->AddInstr( new CTacInstr(opGoto, ltrue));
+	}
+	cb->AddInstr( new CTacInstr(opAssign, temp, new CTacConst(1)));
+	cb->AddInstr( new CTacInstr(opGoto, lfalse));
+	cb->AddInstr( new CTacInstr(opAssign, temp, new CTacConst(0)));
+
+  return temp;
+	*/
+	return NULL;
 }
 
 
