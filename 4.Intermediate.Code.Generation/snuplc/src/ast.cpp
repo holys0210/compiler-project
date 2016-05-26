@@ -665,7 +665,7 @@ void CAstStatReturn::toDot(ostream &out, int indent) const
 CTacAddr* CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
 	CTacAddr* rt = GetExpression()->ToTac(cb);
-	cb->AddInstr( new CTacInstr(opReturn, NULL, rt));
+	cb->AddInstr( new CTacInstr(opReturn, rt));
 	cb->AddInstr( new CTacInstr(opGoto, next));
   return rt;
 }
@@ -1115,6 +1115,66 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
 
 		// right
 		_right->ToTac(cb, ltrue, lfalse);
+
+	}
+	else if( (GetOperation()==opEqual)||(GetOperation()==opNotEqual)){
+		CTacAddr* left_val=NULL ;
+		CTacAddr* right_val=NULL ;
+		if( dynamic_cast<CAstOperation*>(_left) == NULL){
+			left_val = _left->ToTac(cb);
+		}
+		else{
+			CTacLabel* left_true=cb->CreateLabel();
+			CTacLabel* left_false=cb->CreateLabel();
+			CTacLabel* left_end=cb->CreateLabel();
+			// left
+			left_tac=_left->ToTac(cb, left_true, left_false);
+			// true :
+			// 	left <- 1
+			// 	goto left_end
+			cb->AddInstr( left_true);
+			left_val = cb->CreateTemp(GetType());
+			cb->AddInstr( new CTacInstr( opAssign, left_val, new CTacConst(1)));
+			cb->AddInstr( new CTacInstr( opGoto, left_end));
+			// false :
+			// 	left <- 0
+			cb->AddInstr( left_false);
+			cb->AddInstr( new CTacInstr( opAssign, left_val, new CTacConst(0)));
+			// end :
+			cb->AddInstr(  left_end);
+
+		}
+		if( dynamic_cast<CAstOperation*>(_right) == NULL){
+			right_val = _right->ToTac(cb);
+		}
+		else{
+			CTacLabel* right_true=cb->CreateLabel();
+			CTacLabel* right_false=cb->CreateLabel();
+			CTacLabel* right_end=cb->CreateLabel();
+
+			// right
+			right_tac=_right->ToTac(cb, right_true, right_false);
+			// true :
+			// 	right <- 1
+			// 	goto right_end
+			cb->AddInstr( right_true);
+			right_val = cb->CreateTemp(GetType());
+			cb->AddInstr( new CTacInstr( opAssign, right_val, new CTacConst(1)));
+			cb->AddInstr( new CTacInstr( opGoto, right_end));
+			// false :
+			// 	left <- 0
+			cb->AddInstr(  right_false);
+			cb->AddInstr( new CTacInstr( opAssign, right_val, new CTacConst(0)));
+			// end :
+			cb->AddInstr( right_end);
+		}
+
+		// opertaion on left and right
+
+
+		
+		cb->AddInstr( new CTacInstr( GetOperation(), ltrue, left_val, right_val));
+		cb->AddInstr(new CTacInstr(opGoto, lfalse));
 
 	}
 	else{
