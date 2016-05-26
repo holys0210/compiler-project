@@ -1779,7 +1779,7 @@ void CAstArrayDesignator::toDot(ostream &out, int indent) const
 CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 {
 	CTacTemp* temp, *index, *dim, *real_index, *dofs, *pos;
-	CTacAddr* array;
+	CTacAddr* array, *index_tac;
 	const CType* int_type=CTypeManager::Get()->GetInt();
 	// is pointer -> need not implicit casting
 	bool isptr=GetSymbol()->GetDataType()->IsPointer();
@@ -1808,20 +1808,29 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 	if(n==0){
 		return array;
 	}
+
+	// index tac for 0
+	index_tac = GetIndex(0)->ToTac(cb);
+
 	// not special && n=1
 	if((n==1)&&(!spe)){
 		real_index = cb->CreateTemp(int_type);
-		cb->AddInstr( new CTacInstr(opMul, real_index, GetIndex(0)->ToTac(cb), new CTacConst( GetType()->GetDataSize())));
+		cb->AddInstr( new CTacInstr(opMul, real_index, index_tac, new CTacConst( arr->GetBaseType()->GetDataSize())));
 	}
 	// dim > 1
 	else{
 		bool b=false; // use to n=1
 		if(n==1){
 			//special && n=1
-			n++;
+			n = arr->GetNDim();
 			b=true;
 		}
 		for(int i=1; i<n; i++){
+			// index tac
+			if(!b){
+				index_tac = GetIndex(i)->ToTac(cb);
+			}
+
 			// call DIM
 			// param1 : which dim
 			cb->AddInstr( new CTacInstr(opParam, new CTacConst(1), new CTacConst(i+1)));
@@ -1841,7 +1850,7 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 			// mul
 			temp = cb->CreateTemp(int_type);
 			if(i==1){
-				cb->AddInstr( new CTacInstr(opMul, temp, GetIndex(0)->ToTac(cb), dim));
+				cb->AddInstr( new CTacInstr(opMul, temp, index_tac, dim));
 			}
 			else{
 				cb->AddInstr( new CTacInstr(opMul, temp, index, dim));
@@ -1852,13 +1861,13 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 				cb->AddInstr( new CTacInstr(opAdd, index, temp, new CTacConst(0)));
 			}
 			else{
-				cb->AddInstr( new CTacInstr(opAdd, index, temp, GetIndex(i)->ToTac(cb)));
+				cb->AddInstr( new CTacInstr(opAdd, index, temp, index_tac));
 			}
 
 		}
 		// multiply data size
 		real_index = cb->CreateTemp(int_type);
-		cb->AddInstr( new CTacInstr(opMul, real_index, index, new CTacConst( GetType()->GetDataSize())));
+		cb->AddInstr( new CTacInstr(opMul, real_index, index, new CTacConst( arr->GetBaseType()->GetDataSize())));
 
 	}
 
