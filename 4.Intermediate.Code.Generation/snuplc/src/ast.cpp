@@ -813,10 +813,12 @@ CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 	cb->AddInstr(if_true);
 	CAstStatement* s= GetIfBody();
 	do{
-		s->ToTac(cb, next);
+		CTacLabel* lab = cb->CreateLabel();
+		s->ToTac(cb, lab);
 		s=s->GetNext();
+	cb->AddInstr( lab);
 	}while(s!=NULL);
-	CTacLabel* body_l = cb->CreateLabel();
+//	CTacLabel* body_l = cb->CreateLabel();
 	cb->AddInstr(new CTacInstr(opGoto, next));
 	// lfalse:
 	// code
@@ -824,10 +826,12 @@ CTacAddr* CAstStatIf::ToTac(CCodeBlock *cb, CTacLabel *next)
 	if(GetElseBody()!=NULL){
 		CAstStatement* s= GetElseBody();
 		do{
-			s->ToTac(cb, next);
+		CTacLabel* lab = cb->CreateLabel();
+			s->ToTac(cb, lab);
 			s=s->GetNext();
+	cb->AddInstr( lab);
 		}while(s!=NULL);
-		CTacLabel* else_l = cb->CreateLabel();
+//		CTacLabel* else_l = cb->CreateLabel();
 	}
 	// end:
 
@@ -941,6 +945,7 @@ CTacAddr* CAstStatWhile::ToTac(CCodeBlock *cb, CTacLabel *next)
 	}while(s!=NULL);
 
 	cb->AddInstr(new CTacInstr(opGoto, cond_label));
+	
 
 
 
@@ -1870,9 +1875,11 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 		}
 		for(int i=1; i<n; i++){
 			// index tac
+			/*
 			if((!b)&&(i!=1)){
 				index_tac = GetIndex(i)->ToTac(cb);
 			}
+			*/
 
 			// call DIM
 			// param1 : which dim
