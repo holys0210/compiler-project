@@ -134,13 +134,26 @@ void CBackendx86::EmitCode(void)
        << endl;
 
   // TODO
-  // forall s in subscopes do
-  //   EmitScope(s)
-  // EmitScope(program)
+		cout<<"hi\n";
+	const vector<CScope*>& cs =_m->GetSubscopes();
+	if(!cs.empty()){
+		cout<<"hi\n";
+		int child_size=cs.size();
+		cout<<"hi\n";
+		for(int i=0; i<child_size; i++){
+			cout<<"hi\n";
+			EmitScope(cs[i]);
+		}
 
-  _out << _ind << "# end of text section" << endl
-       << _ind << "#-----------------------------------------" << endl
-       << endl;
+		// forall s in subscopes do
+		//   EmitScope(s)
+		// EmitScope(program)
+	}
+	EmitScope(_m);
+
+		_out << _ind << "# end of text section" << endl
+			<< _ind << "#-----------------------------------------" << endl
+			<< endl;
 }
 
 void CBackendx86::EmitData(void)
@@ -200,6 +213,7 @@ void CBackendx86::EmitScope(CScope *scope)
 
   _out << endl;
 }
+
 
 void CBackendx86::EmitGlobalData(CScope *scope)
 {
@@ -468,6 +482,8 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab,
 {
   assert(symtab != NULL);
   vector<CSymbol*> slist = symtab->GetSymbols();
+
+	int size = 0;
 
   // TODO
   // foreach local symbol l in slist do
