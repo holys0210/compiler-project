@@ -1947,7 +1947,7 @@ CTacAddr* CAstArrayDesignator::ToTac(CCodeBlock *cb)
 	cb->AddInstr( new CTacInstr(opAdd, pos, array, temp));
 
 	// return reference of pos
-	CTacReference* ref_pos = new CTacReference(pos->GetSymbol());
+	CTacReference* ref_pos = new CTacReference(pos->GetSymbol(), _symbol);
 
   return ref_pos;
 }
