@@ -1163,7 +1163,7 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
 	else if( (GetOperation()==opEqual)||(GetOperation()==opNotEqual)){
 		CTacAddr* left_val=NULL ;
 		CTacAddr* right_val=NULL ;
-		if( dynamic_cast<CAstOperation*>(_left) == NULL){
+		if( (dynamic_cast<CAstOperation*>(_left) == NULL) || !(_left->GetType()->IsBoolean())){
 			left_val = _left->ToTac(cb);
 		}
 		else{
@@ -1187,7 +1187,7 @@ CTacAddr* CAstBinaryOp::ToTac(CCodeBlock *cb,
 			cb->AddInstr(  left_end);
 
 		}
-		if( dynamic_cast<CAstOperation*>(_right) == NULL){
+		if( (dynamic_cast<CAstOperation*>(_right) == NULL) || !(_right->GetType()->IsBoolean())){
 			right_val = _right->ToTac(cb);
 		}
 		else{
