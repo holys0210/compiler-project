@@ -973,6 +973,9 @@ void CParser::varDecl(CAstProcedure* proc, bool is_para){
 	CSymbol* sym=NULL;
 
 	int i=0;
+	if(is_para){
+		i = proc->GetSymbol()->GetNParams();
+	}
 	for(vector<CToken>::iterator it=id.begin(); it != id.end(); ++it){
 		if(is_para){
 			sym=new CSymParam(i, it->GetValue(), var_type);
