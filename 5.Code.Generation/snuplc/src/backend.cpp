@@ -134,21 +134,15 @@ void CBackendx86::EmitCode(void)
        << endl;
 
   // TODO
-		cout<<"hi\n";
 	const vector<CScope*>& cs =_m->GetSubscopes();
-	if(!cs.empty()){
-		cout<<"hi\n";
-		int child_size=cs.size();
-		cout<<"hi\n";
-		for(int i=0; i<child_size; i++){
-			cout<<"hi\n";
-			EmitScope(cs[i]);
-		}
+	int child_size=cs.size();
+	for(int i=0; i<child_size; i++){
+		EmitScope(cs[i]);
+	}
 
 		// forall s in subscopes do
 		//   EmitScope(s)
 		// EmitScope(program)
-	}
 	EmitScope(_m);
 
 		_out << _ind << "# end of text section" << endl
@@ -200,6 +194,12 @@ void CBackendx86::EmitScope(CScope *scope)
   // label
   _out << _ind << "# scope " << scope->GetName() << endl
        << label << ":" << endl;
+
+	
+	cout<<scope->GetName()<<endl;
+	ComputeStackOffsets(scope->GetSymbolTable(), 8, 12);
+	
+	//emit function prologue
 
   // TODO
   // ComputeStackOffsets(scope)
@@ -484,6 +484,33 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab,
   vector<CSymbol*> slist = symtab->GetSymbols();
 
 	int size = 0;
+	vector<CSymbol*> param_list ;
+
+	_out<< _ind << "# stack offsets:"<<endl;
+	vector<CSymbol*>::iterator it=slist.begin();
+	for(; it != slist.end(); ++it){
+		// local variable
+		if((*it)->GetSymbolType()==stLocal){		
+			if( ((*it)->GetDataType()->GetAlign()==4) && (local_ofs % 4!=0)) {
+				local_ofs -= local_ofs%4;
+				local_ofs += 8;
+			}
+			else{
+				local_ofs += (*it)->GetDataType()->GetAlign();
+			}
+			(*it)->SetBaseRegister("%ebp");
+			(*it)->SetOffset(-local_ofs);
+			_out<< _ind<< "#"<< _ind<< (*it)->GetOffset()<<"(%ebp)   " << (*it)->GetDataType()->GetDataSize()<< "  " << *it<<endl;
+		}
+		// parameter vaiable
+		else if( (*it)->GetSymbolType() == stParam){
+			(*it)->SetBaseRegister("%ebp");
+			CSymParam* pam = dynamic_cast<CSymParam*>(*it);
+			(*it)->SetOffset(param_ofs+4*(pam->GetIndex()));
+			cout<<(*it)->GetName()<< " "<< pam->GetIndex()<<endl;
+			_out<< _ind<< "#"<< _ind<< (*it)->GetOffset()<<"(%ebp)   " << (*it)->GetDataType()->GetDataSize()<< "  " << *it<<endl;
+		}
+	}
 
   // TODO
   // foreach local symbol l in slist do
