@@ -138,13 +138,15 @@ void CBackendx86::EmitCode(void)
 	const vector<CScope*>& cs =_m->GetSubscopes();
 	int child_size=cs.size();
 	for(int i=0; i<child_size; i++){
+		SetScope(cs[i]);
 		EmitScope(cs[i]);
 	}
+	SetScope(_m);
+	EmitScope(_m);
 
 		// forall s in subscopes do
 		//   EmitScope(s)
 		// EmitScope(program)
-	EmitScope(_m);
 
 		_out << _ind << "# end of text section" << endl
 			<< _ind << "#-----------------------------------------" << endl
@@ -199,6 +201,7 @@ void CBackendx86::EmitScope(CScope *scope)
 	
 	cout<<scope->GetName()<<endl;
 	int size=	ComputeStackOffsets(scope->GetSymbolTable(), 8, 12);
+	size-=12;
 
 	
 	//
@@ -213,9 +216,46 @@ void CBackendx86::EmitScope(CScope *scope)
 	//calling convension
 	EmitInstruction("pushl", "%ebx", "save callee saved registers");
 	EmitInstruction("pushl", "%esi");
-	EmitInstruction("pushl", "%ebi");
-	EmitInstruction("movl", "$"+to_string(size)+", %esp", "make room for locals");
+	EmitInstruction("pushl", "%edi");
+	EmitInstruction("subl", "$"+to_string(size)+", %esp", "make room for locals");
 
+	if(size==0){
+
+	}
+	else if(size<=16){
+		_out << endl;
+		EmitInstruction("xorl", "%eax, %eax", "memset local stack area to 0");
+		for(int i=size-4; i>=0; i-=4){
+			EmitInstruction("movl", "%eax, "+to_string(i)+"(%esp)");
+		}
+	}
+	else{
+		_out << endl;
+		EmitInstruction("cld", "",  "memset local stack area to 0");
+		EmitInstruction("xorl", "%eax, %eax");
+		EmitInstruction("movl", "$"+to_string(size/4)+", %ecx");
+		EmitInstruction("mov", "%esp, %edi");
+		EmitInstruction("rep", "stosl");
+	}
+	vector<CSymbol*> sym_vec, slist;
+	slist = scope->GetSymbolTable()->GetSymbols();
+	vector<CSymbol*>::iterator it = slist.begin();
+	for(; it != slist.end(); ++it){
+		if((*it)->GetSymbolType()==stLocal&&(*it)->GetDataType()->IsArray()){
+			sym_vec.push_back(*it);
+		}
+	}
+	for(it = sym_vec.begin(); it != sym_vec.end(); ++it){
+		const CArrayType* arr = dynamic_cast<const CArrayType*>((*it)->GetDataType());
+//		assert(arr!=NULL);
+		for(int i=1; i<=arr->GetNDim(); i++){
+			EmitInstruction("movl", "$"+to_string(i)+","+to_string((*it)->GetOffset())+"("+(*it)->GetBaseRegister()+")", "local array '"+(*it)->GetName()+"': "+to_string(i)+" dimensions");
+			EmitInstruction("movl", "$"+to_string(arr->GetNElem())+","+to_string((*it)->GetOffset()+4)+"("+(*it)->GetBaseRegister()+")", "  dimension "+to_string(i)+": "+to_string(arr->GetNElem())+" elements");
+		}
+	}
+	
+
+	
 	//
 	// middle
 	//
@@ -226,9 +266,9 @@ void CBackendx86::EmitScope(CScope *scope)
 	//
   // emit function epilogue
 	//
-	_out<< endl << "l_"+ scope->GetName()+"_exit"<<endl;
+	_out<< endl << "l_"+ scope->GetName()+"_exit:"<<endl;
 	_out<< _ind << "# epilogue"<<endl;
-	EmitInstruction("addl", "$"+to_string(size)+", $esp", "remove locals");
+	EmitInstruction("addl", "$"+to_string(size)+", %esp", "remove locals");
 	EmitInstruction("popl", "%edi");
 	EmitInstruction("popl", "%esi");
 	EmitInstruction("popl", "%ebx");
@@ -366,8 +406,17 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
 			Load(i->GetSrc(1), "%eax", cmt.str());
 			if( dynamic_cast<const CTacReference*>(i->GetDest()) != NULL){
 				//reference
+				// load
 				Load(dynamic_cast<CTacAddr*>(i->GetDest()), "%edi");
-				EmitInstruction("movl", "%eax, (%edi)");
+
+				// make new symbol for %edi
+				const CTacReference* ref = dynamic_cast<const CTacReference*>(i->GetDest()); 
+				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
+				sym->SetBaseRegister("%edi");
+				CTacTemp* temp = new CTacTemp(sym);
+
+				// store
+				Store(temp, 'a');
 			}
 			else{
 				Store(i->GetDest(), 'a');
@@ -381,10 +430,25 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
 			Store(i->GetDest(), 'a');
 			break;
 
+		case opSub:
+			Load(i->GetSrc(1), "%eax", cmt.str());
+			Load(i->GetSrc(2), "%ebx");
+			EmitInstruction("subl", "%ebx, %eax");
+			Store(i->GetDest(), 'a');
+			break;
+
 		case opMul:
 			Load(i->GetSrc(1), "%eax", cmt.str());
 			Load(i->GetSrc(2), "%ebx");
-			EmitInstruction("imull", "%ebx, %eax");
+			EmitInstruction("imull", "%ebx");
+			Store(i->GetDest(), 'a');
+			break;
+
+		case opDiv:
+			Load(i->GetSrc(1), "%eax", cmt.str());
+			Load(i->GetSrc(2), "%ebx");
+			EmitInstruction("cdq");
+			EmitInstruction("idivl", "%ebx");
 			Store(i->GetDest(), 'a');
 			break;
 
@@ -419,21 +483,92 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
     // unconditional branching
     // goto dst
     // TODO
+		case opGoto:
+			EmitInstruction("jmp", Label(dynamic_cast<CTacLabel*>(i->GetDest())), cmt.str());
+			break;
 
     // conditional branching
     // if src1 relOp src2 then goto dst
     // TODO
+		case opEqual:
+		case opNotEqual:
+		case opLessEqual:
+		case opLessThan:
+		case opBiggerEqual:
+		case opBiggerThan:
+		{
+			const CTacReference* ref = dynamic_cast<const CTacReference*>(i->GetSrc(1)); 
+			if(ref != NULL){
+				// make new symbol for %edi
+				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
+				sym->SetBaseRegister("%edi");
+				CTacTemp* temp = new CTacTemp(sym);
+				Load(i->GetSrc(1), "%edi");
+				Load(temp, "%eax", cmt.str());
+			}
+			else{
+				Load(i->GetSrc(1), "%eax", cmt.str());
+			}
+			ref = dynamic_cast<const CTacReference*>(i->GetSrc(2));
+			if( ref !=NULL){
+				// make new symbol for %edi
+				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
+				sym->SetBaseRegister("%edi");
+				CTacTemp* temp = new CTacTemp(sym);
+				Load(i->GetSrc(2), "%edi");
+				Load(temp, "%ebx", cmt.str());
+			}
+			else{
+				Load(i->GetSrc(2), "%ebx");
+			}
+			EmitInstruction("cmpl", "%ebx, %eax");
+			EmitInstruction("j"+Condition(op), Label(dynamic_cast<CTacLabel*>(i->GetDest())));
+			break;
+		}
+	
 
     // function call-related operations
     // TODO
 		case opParam:
-			Load(i->GetSrc(1), "%eax", cmt.str());
+			if( dynamic_cast<const CTacReference*>(i->GetSrc(1)) != NULL){
+				Load(i->GetSrc(1), "%edi");
+				EmitInstruction("movl", "(%edi), %eax", cmt.str());
+			}
+			else{
+				Load(i->GetSrc(1), "%eax", cmt.str());
+			}
 			EmitInstruction("pushl", "%eax");
 			break;
 
 		case opCall:
-			EmitInstruction("call", Operand(i->GetDest()), cmt.str());
-			EmitInstruction("addl", "$4, %esp");
+			if(dynamic_cast<CTacLabel*>(i->GetDest())!=NULL){
+				// not return
+				EmitInstruction("call", Operand(i->GetDest()), cmt.str());
+				CTacLabel* lab= dynamic_cast<CTacLabel*>(i->GetDest());
+				const CSymbol* sym =_m->GetSymbolTable()->FindSymbol(lab->GetLabel());
+				const CSymProc* sym_proc = dynamic_cast<const CSymProc*>(sym);
+				int n = sym_proc->GetNParams();
+				if(n!=0){
+					EmitInstruction("addl", Imm(4*n)+", %esp");
+				}
+			}
+			else{
+				// some return
+				EmitInstruction("call", Operand(i->GetSrc(1)), cmt.str());
+				CTacName* name = dynamic_cast<CTacName*>( i->GetSrc(1));
+				const CSymbol* sym = name->GetSymbol();
+				const CSymProc* sym_proc = dynamic_cast<const CSymProc*>(sym);
+				int n = sym_proc->GetNParams();
+				if(n!=0){
+					EmitInstruction("addl", Imm(4*n)+", %esp");
+				}
+				Store(i->GetDest(), 'a');
+			}
+			break;
+
+		case opReturn:
+			Load(i->GetSrc(1), "%eax", cmt.str());
+			EmitInstruction("jmp", Label("exit"));
 			break;
 
 
@@ -526,24 +661,40 @@ string CBackendx86::Operand(const CTac *op)
 	const CTacName* name = dynamic_cast<const CTacName*>(op);
 	if(name != NULL){
 		// temp
+		/*
 		const CTacReference* ref = dynamic_cast<const CTacReference*>(name);
 		if( ref != NULL){
 			//ref
-			operand = to_string(ref->GetSymbol()->GetOffset());
+			if( ref->GetSymbol()->GetOffset() != 0){
+				operand = to_string(ref->GetSymbol()->GetOffset());
+			}
 			operand += "("+ref->GetSymbol()->GetBaseRegister()+")";
 			return operand;
 		}
 
 		const CTacTemp* temp = dynamic_cast<const CTacTemp*>(name);
-		if( temp != NULL){
+		if( (temp != NULL)&&(name->GetSymbol()->GetSymbolType()!=stGlobal)){
 			// temp
-			operand = to_string(name->GetSymbol()->GetOffset());
+			if( name->GetSymbol()->GetOffset() != 0){
+				operand = to_string(name->GetSymbol()->GetOffset());
+			}
 			operand += "("+name->GetSymbol()->GetBaseRegister()+")";
 		}
 		else{
 			// name
 				operand = name->GetSymbol()->GetName();
 		}
+		*/
+		if( (name->GetSymbol()->GetSymbolType()==stLocal)||(name->GetSymbol()->GetSymbolType()==stParam)){
+			if( name->GetSymbol()->GetOffset() != 0){
+				operand = to_string(name->GetSymbol()->GetOffset());
+			}
+			operand += "("+name->GetSymbol()->GetBaseRegister()+")";
+		}
+		else{
+			operand = name->GetSymbol()->GetName();
+		}
+
 			return operand;
 	}
 }
@@ -590,6 +741,27 @@ string CBackendx86::Condition(EOperation cond) const
 int CBackendx86::OperandSize(CTac *t) const
 {
   int size = 4;
+	const CType* ct;
+	const CTacName* name = dynamic_cast<const CTacName*>(t);
+	if(name != NULL){
+		const CTacReference* ref= dynamic_cast<const CTacReference*>(name);
+		if(ref != NULL){
+			//reference
+			size =4;
+		}
+		else{
+			ct = name->GetSymbol()->GetDataType();
+			if( ct->IsArray()){
+				//array
+				const CArrayType* arr = dynamic_cast<const CArrayType*>(ct);
+				ct = arr->GetBaseType();
+			}
+			size = ct->GetDataSize();
+		}
+	}
+
+
+
 
   // TODO
   // compute the size for operand t of type CTacName
@@ -611,19 +783,18 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab,
 
 	_out<< _ind << "# stack offsets:"<<endl;
 	vector<CSymbol*>::iterator it=slist.begin();
+	bool a=true;
 	for(; it != slist.end(); ++it){
 		// local variable
 		if((*it)->GetSymbolType()==stLocal){		
-			if( ((*it)->GetDataType()->GetAlign()==4) && (local_ofs % 4!=0)) {
+			local_ofs += (*it)->GetDataType()->GetSize();
+			if( ((*it)->GetDataType()->GetSize()>1) && (local_ofs % 4!=0)) {
 				local_ofs -= local_ofs%4;
-				local_ofs += 8;
-			}
-			else{
-				local_ofs += (*it)->GetDataType()->GetAlign();
+				local_ofs += 4;
 			}
 			(*it)->SetBaseRegister("%ebp");
 			(*it)->SetOffset(-local_ofs);
-			_out<< _ind<< "#"<< _ind<< (*it)->GetOffset()<<"(%ebp)   " << (*it)->GetDataType()->GetDataSize()<< "  " << *it<<endl;
+			_out<< _ind<< "#"<< right <<setw(7)<< (*it)->GetOffset()<<"(%ebp)"<<setw(4) << (*it)->GetDataType()->GetSize()<< "  " << *it<<endl;
 		}
 		// parameter vaiable
 		else if( (*it)->GetSymbolType() == stParam){
@@ -631,7 +802,7 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab,
 			CSymParam* pam = dynamic_cast<CSymParam*>(*it);
 			(*it)->SetOffset(param_ofs+4*(pam->GetIndex()));
 			cout<<(*it)->GetName()<< " "<< pam->GetIndex()<<endl;
-			_out<< _ind<< "#"<< _ind<< (*it)->GetOffset()<<"(%ebp)   " << (*it)->GetDataType()->GetDataSize()<< "  " << *it<<endl;
+			_out<< _ind<< "#"<< right << setw(7) << (*it)->GetOffset()<<"(%ebp)" <<setw(4) << (*it)->GetDataType()->GetDataSize()<< "  " << *it<<endl;
 		}
 	}
 
@@ -647,6 +818,12 @@ size_t CBackendx86::ComputeStackOffsets(CSymtab *symtab,
   // align size
   //
   // dump stack frame to assembly file
+
+	if(local_ofs % 4 !=0){
+		local_ofs -= local_ofs%4;
+		local_ofs += 4;
+	}
+
 
   return local_ofs;
 }
