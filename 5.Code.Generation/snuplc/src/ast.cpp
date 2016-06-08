@@ -654,7 +654,6 @@ void CAstStatReturn::toDot(ostream &out, int indent) const
   string ind(indent, ' ');
 
   CAstNode::toDot(out, indent);
-
   if (_expr != NULL) {
     _expr->toDot(out, indent);
     out << ind << dotID() << "->" << _expr->dotID() << ";" << endl;
@@ -663,6 +662,10 @@ void CAstStatReturn::toDot(ostream &out, int indent) const
 
 CTacAddr* CAstStatReturn::ToTac(CCodeBlock *cb, CTacLabel *next)
 {
+	if(GetExpression()==NULL){
+		cb->AddInstr( new CTacInstr(opReturn, NULL));
+		return NULL;
+	}
 	CTacAddr* rt;
 	if((GetExpression()->GetType()->IsBoolean())&&(dynamic_cast<CAstOperation*>(GetExpression()))){
 		CTacLabel* ltrue = cb->CreateLabel();
@@ -1556,12 +1559,35 @@ CTacAddr* CAstFunctionCall::ToTac(CCodeBlock *cb)
 	int n = GetNArgs();
 	CTacAddr* arg_tac;
 	for(int i=n-1; i>=0; i--){
-		arg_tac=GetArg(i)->ToTac(cb);
+		 if((GetArg(i)->GetType()->IsBoolean())&&(dynamic_cast<CAstOperation*>(GetArg(i))!=NULL)){
+			 CTacLabel* ltrue=cb->CreateLabel();
+			 CTacLabel* lfalse=cb->CreateLabel();
+			 CTacLabel* end_label=cb->CreateLabel();
+
+			 GetArg(i)->ToTac(cb, ltrue, lfalse);
+			 // ltrue:
+			 //        code
+			 //        goto end
+			 arg_tac=cb->CreateTemp(GetArg(i)->GetType());
+			 cb->AddInstr(ltrue);
+			 cb->AddInstr(new CTacInstr(opAssign, arg_tac, new CTacConst(1)));
+			 cb->AddInstr( new CTacInstr(opGoto, end_label));
+			 // lfalse:
+			 // code
+			 cb->AddInstr( lfalse);
+			 cb->AddInstr(new CTacInstr(opAssign, arg_tac, new CTacConst(0)));
+			 // end:
+			 cb->AddInstr(end_label);
+		 }
+		 else{
+			 arg_tac=GetArg(i)->ToTac(cb);
+		 }
 		cb->AddInstr( new CTacInstr(opParam, new CTacConst(i), arg_tac));
 	}
 
 	if(GetType()->IsNull()){
 		cb->AddInstr( new CTacInstr(opCall, new CTacLabel(_symbol->GetName())));
+		//cb->AddInstr( new CTacInstr(opCall, new CTacName(_symbol), NULL));
 		return NULL;
 	}
 	else{
