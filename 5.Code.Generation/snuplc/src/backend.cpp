@@ -248,9 +248,12 @@ void CBackendx86::EmitScope(CScope *scope)
 	for(it = sym_vec.begin(); it != sym_vec.end(); ++it){
 		const CArrayType* arr = dynamic_cast<const CArrayType*>((*it)->GetDataType());
 //		assert(arr!=NULL);
-		for(int i=1; i<=arr->GetNDim(); i++){
-			EmitInstruction("movl", "$"+to_string(i)+","+to_string((*it)->GetOffset())+"("+(*it)->GetBaseRegister()+")", "local array '"+(*it)->GetName()+"': "+to_string(i)+" dimensions");
-			EmitInstruction("movl", "$"+to_string(arr->GetNElem())+","+to_string((*it)->GetOffset()+4)+"("+(*it)->GetBaseRegister()+")", "  dimension "+to_string(i)+": "+to_string(arr->GetNElem())+" elements");
+			EmitInstruction("movl", "$"+to_string(arr->GetNDim())+","+to_string((*it)->GetOffset())+"("+(*it)->GetBaseRegister()+")", "local array '"+(*it)->GetName()+"': "+to_string(arr->GetNDim())+" dimensions");
+			int arr_n = arr->GetNDim();
+		for(int i=1; i<=arr_n; i++){
+			EmitInstruction("movl", "$"+to_string(arr->GetNElem())+","+to_string((*it)->GetOffset()+(4*i))+"("+(*it)->GetBaseRegister()+")", "  dimension "+to_string(i)+": "+to_string(arr->GetNElem())+" elements");
+			const CType* ct = arr->GetInnerType();
+			arr = dynamic_cast<const CArrayType*>(ct);
 		}
 	}
 	
@@ -492,13 +495,7 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
     // function call-related operations
     // TODO
 		case opParam:
-			if( dynamic_cast<const CTacReference*>(i->GetSrc(1)) != NULL){
-				Load(i->GetSrc(1), "%edi");
-				EmitInstruction("movl", "(%edi), %eax", cmt.str());
-			}
-			else{
-				Load(i->GetSrc(1), "%eax", cmt.str());
-			}
+			Load(i->GetSrc(1), "%eax", cmt.str());
 			EmitInstruction("pushl", "%eax");
 			break;
 
@@ -529,7 +526,9 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
 			break;
 
 		case opReturn:
-			Load(i->GetSrc(1), "%eax", cmt.str());
+			if(i->GetSrc(1)!=NULL){
+				Load(i->GetSrc(1), "%eax", cmt.str());
+			}
 			EmitInstruction("jmp", Label("exit"));
 			break;
 
