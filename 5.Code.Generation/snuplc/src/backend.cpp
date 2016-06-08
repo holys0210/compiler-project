@@ -404,23 +404,7 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
     // TODO
 		case opAssign:
 			Load(i->GetSrc(1), "%eax", cmt.str());
-			if( dynamic_cast<const CTacReference*>(i->GetDest()) != NULL){
-				//reference
-				// load
-				Load(dynamic_cast<CTacAddr*>(i->GetDest()), "%edi");
-
-				// make new symbol for %edi
-				const CTacReference* ref = dynamic_cast<const CTacReference*>(i->GetDest()); 
-				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
-				sym->SetBaseRegister("%edi");
-				CTacTemp* temp = new CTacTemp(sym);
-
-				// store
-				Store(temp, 'a');
-			}
-			else{
-				Store(i->GetDest(), 'a');
-			}
+			Store(i->GetDest(), 'a');
 			break;
 
 		case opAdd:
@@ -497,30 +481,8 @@ void CBackendx86::EmitInstruction(CTacInstr *i)
 		case opBiggerEqual:
 		case opBiggerThan:
 		{
-			const CTacReference* ref = dynamic_cast<const CTacReference*>(i->GetSrc(1)); 
-			if(ref != NULL){
-				// make new symbol for %edi
-				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
-				sym->SetBaseRegister("%edi");
-				CTacTemp* temp = new CTacTemp(sym);
-				Load(i->GetSrc(1), "%edi");
-				Load(temp, "%eax", cmt.str());
-			}
-			else{
-				Load(i->GetSrc(1), "%eax", cmt.str());
-			}
-			ref = dynamic_cast<const CTacReference*>(i->GetSrc(2));
-			if( ref !=NULL){
-				// make new symbol for %edi
-				CSymbol *sym = new CSymbol("temp", stLocal, ref->GetDerefSymbol()->GetDataType());
-				sym->SetBaseRegister("%edi");
-				CTacTemp* temp = new CTacTemp(sym);
-				Load(i->GetSrc(2), "%edi");
-				Load(temp, "%ebx", cmt.str());
-			}
-			else{
-				Load(i->GetSrc(2), "%ebx");
-			}
+			Load(i->GetSrc(1), "%eax", cmt.str());
+			Load(i->GetSrc(2), "%ebx");
 			EmitInstruction("cmpl", "%ebx, %eax");
 			EmitInstruction("j"+Condition(op), Label(dynamic_cast<CTacLabel*>(i->GetDest())));
 			break;
@@ -612,7 +574,14 @@ void CBackendx86::Load(CTacAddr *src, string dst, string comment)
   }
 
   // emit the load instruction
-  EmitInstruction(mnm + mod, Operand(src) + ", " + dst, comment);
+	const CTacReference* ref =dynamic_cast<const CTacReference*>(src);
+	if(ref!=NULL){
+		EmitInstruction("movl", Operand(src)+", %edi");
+		EmitInstruction("movl", "(%edi), "+dst, comment);
+	}
+	else{
+		EmitInstruction(mnm + mod, Operand(src) + ", " + dst, comment);
+	}
 }
 
 void CBackendx86::Store(CTac *dst, char src_base, string comment)
@@ -631,7 +600,14 @@ void CBackendx86::Store(CTac *dst, char src_base, string comment)
   }
 
   // emit the store instruction
-  EmitInstruction(mnm + mod, src + ", " + Operand(dst), comment);
+	const CTacReference* ref = dynamic_cast<const CTacReference*>(dst);
+	if(ref!=NULL){
+		EmitInstruction("movl", Operand(dst)+", %edi");
+		EmitInstruction("movl", src + ", (%edi)");
+	}
+	else{
+		EmitInstruction(mnm + mod, src + ", " + Operand(dst), comment);
+	}
 }
 
 string CBackendx86::Operand(const CTac *op)
